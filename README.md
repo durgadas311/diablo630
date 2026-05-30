@@ -8,3 +8,7 @@ same character used by CP/NET and MP/M (and ENDLIST.COM) to end a print
 job (and release the printer).
 
 ![screen-shot](imgs/diablo630.png)
+
+The plain version "Diablo630,jar" will accept printer output on stdin.
+You can type output into the progrm, or redirect from a file that contains
+Diablo 630 compatible characters and ESC sequences.

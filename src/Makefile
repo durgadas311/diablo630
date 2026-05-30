@@ -43,6 +43,9 @@ Diablo630telnet.jar: Diablo630telnet.class $(CORE_CLASSES) $(SUPP_CLASSES)
 Diablo630Embedded.jar: $(CORE_CLASSES) $(SUPP_CLASSES)
 	jar -cMf $@ $(foreach x,$^,'$(x)')
 
+ship: jar
+	cp *.jar ../bin
+
 clobber:
 	rm -f *.jar *.class
 

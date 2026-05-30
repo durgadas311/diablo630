@@ -69,7 +69,7 @@ class PrinterConsole
 		_pitch_txt.setText("CPI: " + cpi + "    LPI: " + lpi);
 	}
 
-	public void setPaper(PaperDialog.PaperMediaSize ms, OrientationRequested or) {
+	public void setPaper(MediaSizeName ms, OrientationRequested or) {
 		_paper_txt.setText("Paper: " + ms.toString() + "/" + or.toString());
 	}
 

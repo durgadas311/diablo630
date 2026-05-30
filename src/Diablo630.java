@@ -47,7 +47,7 @@ class Diablo630 extends Printer_Paper
 	private float _vsi, _hsi;	// changed by printer commands
 	private float _vsx, _hsx;
 	// may be changed mid-job without affecting
-	PaperDialog.PaperMediaSize _ms;
+	MediaSizeName _ms;
 	OrientationRequested _or;
 	PaperPaintable _bkg;
 	DocAttributeSet _dset;	// must be setup before Print2DtoStream
@@ -197,14 +197,14 @@ class Diablo630 extends Printer_Paper
 
 	// This can change during a print job without affecting it.
 	// Called from setup menu when paper has changed.
-	public void setupPaper(PaperDialog.PaperMediaSize ms, OrientationRequested or) {
-		PaperDialog.PaperDim pd = _pset.paperSize(ms);
-		if (pd == null) {
+	public void setupPaper(MediaSizeName ms, OrientationRequested or) {
+		MediaSize mz = _pset.paperSize(ms);
+		if (mz == null) {
 			System.err.println("Unsupported Page Size");
 			System.exit(1);
 		}
-		_ppw = pd.getWidth();	// always the small edge.
-		_pph = pd.getHeight();
+		_ppw = mz.getX(Size2DSyntax.INCH);	// always the small edge.
+		_pph = mz.getY(Size2DSyntax.INCH);
 		if (or == OrientationRequested.LANDSCAPE) {
 			_pw = _pph;
 			_ph = _ppw;
@@ -216,7 +216,6 @@ class Diablo630 extends Printer_Paper
 			System.exit(1);
 		}
 		_dset = new HashDocAttributeSet();
-		//_dset.add(ms);
 		_dset.add(or);
 		_dset.add(new DocPaperSize(_ppw, _pph, Size2DSyntax.INCH));
 		_dset.add(new MediaPrintableArea(0.0f, 0.0f, _ppw, _pph,
@@ -233,6 +232,7 @@ class Diablo630 extends Printer_Paper
 	public void setPaper(float l, float t) {
 		float lm = _hsx * l;
 		float tm = _vsx * t;
+		// TODO: allow scaling...
 		// TODO: round values?
 		_pwx = (int)Math.floor(_hsx * _pw);
 		_phx = (int)Math.floor(_vsx * _ph);
@@ -386,17 +386,17 @@ class Diablo630 extends Printer_Paper
 			font = new Font(fargs[0], fs, fp);
 		}
 
-		_ms = PaperDialog.PaperMediaSize.NA_LETTER;
+		_ms = MediaSizeName.NA_LETTER;
 		_or = OrientationRequested.PORTRAIT;
 		_bkg = null;
 		if (pargs != null) {
 			for (String parg : pargs) {
 				if (parg.equalsIgnoreCase("LETTER")) {
-					_ms = PaperDialog.PaperMediaSize.NA_LETTER;
+					_ms = MediaSizeName.NA_LETTER;
 				} else if (parg.equalsIgnoreCase("LEGAL")) {
-					_ms = PaperDialog.PaperMediaSize.NA_LEGAL;
+					_ms = MediaSizeName.NA_LEGAL;
 				} else if (parg.equalsIgnoreCase("FORMS")) {
-					_ms = PaperDialog.PaperMediaSize.NA_FORMS;
+					_ms = PaperDialog.getForms();
 				} else if (parg.equalsIgnoreCase("PORTRAIT")) {
 					_or = OrientationRequested.PORTRAIT;
 				} else if (parg.equalsIgnoreCase("LANDSCAPE")) {

@@ -21,8 +21,8 @@ SUPP_CLASSES = \
 		Diablo630$$Actions.class \
 		Diablo630$$DocPaperSize.class \
 		Diablo630$$ReqPaperSize.class \
-		PaperDialog$$PaperMediaSize.class \
-		PaperDialog$$PaperDim.class \
+		PaperDialog$$F11x14.class \
+		PaperDialog$$M11x14.class \
 		Printer_Paper$$plot.class \
 		SuffFileChooser$$TapeProt.class
 

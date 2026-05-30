@@ -3,47 +3,56 @@
 import java.awt.*;
 import java.util.Vector;
 import javax.swing.*;
+import javax.print.*;
 import javax.print.attribute.standard.*;
+import javax.print.attribute.Size2DSyntax;
 
 class PaperDialog
 {
-
-	public enum PaperMediaSize {
-		NA_LETTER,
-		NA_LEGAL,
-		NA_FORMS,
-	}
-
-	public class PaperDim {
-		float _w, _h;
-		public PaperDim(float w, float h) {
-			_w = w;
-			_h = h;
-		}
-		public float getWidth() { return _w; }
-		public float getHeight() { return _h; }
-	}
-
 	JPanel _dia_pn;
 
-	private JComboBox<PaperMediaSize> _ms_cb;
+	private JComboBox<MediaSizeName> _ms_cb;
 	private JComboBox<OrientationRequested> _or_cb;
 	private JTextField _lm_txt;
 	private JTextField _tm_txt;
 	private float _lm, _tm;
-	PaperMediaSize _ms;
+	MediaSizeName _ms;
+	static private M11x14 _m11x14;
+	static private F11x14 _f11x14;
 	OrientationRequested _or;
 	JOptionPane _prefs;
 	Object[] _btns;
 
+	static {
+		_m11x14 = new M11x14();
+		_f11x14 = new F11x14();
+	}
 
-	public void setMedia(PaperMediaSize ms) {
+	static class M11x14 extends MediaSizeName {
+		public M11x14() {
+			super(311);
+		}
+		// Override
+		public String toString() {
+			return "F11x14";
+		}
+	}
+
+	static class F11x14 extends MediaSize {
+		public F11x14() {
+			super(11.0f, 14.0f, Size2DSyntax.INCH);
+		}
+	}
+
+	static public MediaSizeName getForms() { return _m11x14; }
+
+	public void setMedia(MediaSizeName ms) {
 		_ms = ms;
 		_ms_cb.setSelectedItem(ms);
 	}
 
-	public PaperMediaSize getMedia() {
-		return (PaperMediaSize)_ms_cb.getSelectedItem();
+	public MediaSizeName getMedia() {
+		return (MediaSizeName)_ms_cb.getSelectedItem();
 	}
 
 	public void setOrient(OrientationRequested or) {
@@ -85,16 +94,12 @@ class PaperDialog
 		return tm;
 	}
 
-	public PaperDim paperSize(PaperMediaSize ms) {
-		PaperDim d = null;
-		if (ms == PaperMediaSize.NA_LETTER) {
-			d = new PaperDim(8.5f, 11.0f);
-		} else if (ms == PaperMediaSize.NA_LEGAL) {
-			d = new PaperDim(8.5f, 14.0f);
-		} else if (ms == PaperMediaSize.NA_FORMS) {
-			d = new PaperDim(11.0f, 14.0f);
+	public MediaSize paperSize(MediaSizeName ms) {
+		if (ms.equals(_m11x14)) {
+			return _f11x14;
+		} else {
+			return MediaSize.getMediaSizeForName(ms);
 		}
-		return d;
 	}
 
 	public boolean doDialog(JFrame frame) {
@@ -111,7 +116,7 @@ class PaperDialog
 			if (f >= 0 && f != _tm) {
 				chg = true;
 			}
-			PaperMediaSize m = getMedia();
+			MediaSizeName m = getMedia();
 			if (m != _ms) {
 				chg = true;
 			}
@@ -143,11 +148,29 @@ class PaperDialog
 		s.insets.right = 0;
 		s.anchor = GridBagConstraints.WEST;
 
-		Vector<PaperMediaSize> mss = new Vector<PaperMediaSize>();
-		mss.add(PaperMediaSize.NA_LETTER);
-		mss.add(PaperMediaSize.NA_LEGAL);
-		mss.add(PaperMediaSize.NA_FORMS);
-		_ms_cb = new JComboBox<PaperMediaSize>(mss);
+		Vector<MediaSizeName> mss = new Vector<MediaSizeName>();
+		mss.add(_m11x14);
+		PrintService prt = PrintServiceLookup.lookupDefaultPrintService();
+		if (prt != null) {
+			Object attr = prt.getSupportedAttributeValues(Media.class, null, null);
+			if (attr instanceof Media[]) {
+				Media[] meds = (Media[])attr;
+				for (Media media : meds) {
+					// Filter for physical paper sizes
+					if (media instanceof MediaSizeName) {
+						mss.add((MediaSizeName)media);
+					}
+				}
+			}
+		} else {
+			System.err.format("No Default Printer set in system.\n");
+		}
+		if (mss.size() == 1) {
+			mss.add(MediaSizeName.NA_LETTER);
+			mss.add(MediaSizeName.NA_LEGAL);
+			mss.add(MediaSizeName.ISO_A4);
+		}
+		_ms_cb = new JComboBox<MediaSizeName>(mss);
 		gridbag.setConstraints(_ms_cb, s);
 		_dia_pn.add(_ms_cb);
 		s.gridy += 1;

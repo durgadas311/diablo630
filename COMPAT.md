@@ -25,7 +25,7 @@ ESC 9 | Set Left Margin | Not Yet
 ESC A | Alt Color (Red) | Not Yet
 ESC B | Norm Color (Black) | Not Yet
 ESC C | Clear top/bottom margins | Not Yet
-ESC D | Superscript shift | Not Yet
+ESC D | Superscript shift | Yes
 ESC E | Begin underscore | Not Yet
 ESC H | (Juki) &#167; | Yes
 ESC I | (Juki) &#163; | Yes
@@ -40,7 +40,7 @@ ESC Q | Disable Prop spacing | Not Yet
 ESC R | End Underscore | Not Yet
 ESC S | Reset CSI to dipswitch | Not Yet
 ESC T | Set Top Margin | Not Yet
-ESC U | Subscript shift | Not Yet
+ESC U | Subscript shift | Yes
 ESC W | Begin shadow | Not Yet
 ESC X | Cancel modes | Not Yet
 ESC Y | (Juki) &#162; | Yes

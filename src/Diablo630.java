@@ -519,6 +519,17 @@ class Diablo630 extends Printer_Paper
 		if (_y < 0) _y = 0;
 	}
 
+	private void fwdHalf() {
+		float y = _y + _vsi / 2f;
+		if (y >= _phx) return;
+		_y = y;
+	}
+
+	private void revHalf() {
+		_y -= _vsi / 2f;
+		if (_y < 0) _y = 0;
+	}
+
 	private void space() {
 		_x += _hsi + _off;
 		if (_x >= _pwx) _x = _pwx - 1;
@@ -688,8 +699,12 @@ class Diablo630 extends Printer_Paper
 		case 'Q':	// disable prop print
 			break;
 		case 'U':	// shift +(_vsi/2) - subscript
+			fwdHalf();
+			_adjacent = false;
 			break;
 		case 'D':	// shift -(_vsi/2) - superscript
+			revHalf();
+			_adjacent = false;
 			break;
 		case 'T':	// make _y be top margin...
 			break;

@@ -553,14 +553,34 @@ class Diablo630 extends Printer_Paper
 		_x = x * _fw;
 	}
 
+	private void gotoCol(int col) {
+		float x = (float)col * _hsi;
+		if (x >= _pwx) {
+			return;
+		}
+		_x = x;
+	}
+
+	private void gotoLine(int line) {
+		float y = (float)line * _vsi;
+		if (y >= _phx) {
+			return;
+		}
+		_y = y;
+	}
+
 	private String do_esc2(byte b) {
 		String ret = null; // non-printable...
 		switch(_esc) {
 		case '\t': // TAB - tab to col
+			gotoCol((b - 1) & 0x7f);
+			_adjacent = false;
 			break;
 		case 12: // FF - set lines/page
 			break;
 		case 11: // VT - v-tab to line
+			gotoLine((b - 1) & 0x7f);
+			_adjacent = false;
 			break;
 		case 17: // DC1 - set horiz offset
 			// TODO: need to handle ESC Z = 01111111b?

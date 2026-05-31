@@ -7,8 +7,8 @@ Sequence | Meaning | Supported
 ESC BS | Micro BS | Not Yet
 ESC LF | Reverse LF | Yes
 ESC FF n | Set lines/page | Not Yet
-ESC VT n | Absolute Vert-tab to line | Not Yet
-ESC TAB n | Absolute tab to col | Not Yet
+ESC VT n | Absolute Vert-tab to line | Yes
+ESC TAB n | Absolute tab to col | Yes
 ESC DC1 n | Character offset | Yes
 ESC RS n | Set VSI | Yes
 ESC US n | Set HSI | Yes

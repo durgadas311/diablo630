@@ -9,7 +9,7 @@ ESC LF | Reverse LF | Yes
 ESC FF n | Set lines/page | Not Yet
 ESC VT n | Absolute Vert-tab to line | Not Yet
 ESC TAB n | Absolute tab to col | Not Yet
-ESC DC1 n | Character offset | Not Yet
+ESC DC1 n | Character offset | Yes
 ESC RS n | Set VSI | Yes
 ESC US n | Set HSI | Yes
 ESC 0 | Set Right Margin | Not Yet

@@ -520,12 +520,12 @@ class Diablo630 extends Printer_Paper
 	}
 
 	private void space() {
-		_x += _hsi;
+		_x += _hsi + _off;
 		if (_x >= _pwx) _x = _pwx - 1;
 	}
 
 	private void bkspace() {
-		_x -= _hsi;
+		_x -= _hsi + _off;
 		if (_x < 0) _x = 0;
 	}
 
@@ -565,7 +565,7 @@ class Diablo630 extends Printer_Paper
 		case 17: // DC1 - set horiz offset
 			// TODO: need to handle ESC Z = 01111111b?
 			_off = ((float)(b & 0x3f) * _hsx) / 120.0f;
-			if ((b & 0x40) != 0) {
+			if (_off != 0 && (b & 0x40) != 0) {
 				_off = -_off;
 			}
 			break;
@@ -803,7 +803,7 @@ class Diablo630 extends Printer_Paper
 				super.addPlot(s, _x, _y);
 			}
 			forward();
-			_adjacent = (Math.round(_hsi) == Math.round(_fw));
+			_adjacent = (Math.round(_hsi + _off) == Math.round(_fw));
 if (false && !_adjacent) {
 System.err.println("Not adjacent: " + _hsi + " vs " + _fw);
 }

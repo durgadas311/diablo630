@@ -556,6 +556,12 @@ class Diablo630 extends Printer_Paper
 	private String do_esc2(byte b) {
 		String ret = null; // non-printable...
 		switch(_esc) {
+		case '\t': // TAB - tab to col
+			break;
+		case 12: // FF - set lines/page
+			break;
+		case 11: // VT - v-tab to line
+			break;
 		case 17: // DC1 - set horiz offset
 			// TODO: need to handle ESC Z = 01111111b?
 			_off = ((float)(b & 0x3f) * _hsx) / 120.0f;
@@ -582,6 +588,9 @@ class Diablo630 extends Printer_Paper
 		String ret = null;
 		_esc = 0;
 		switch(b) {
+		case 12: // FF - set lines/page
+		case 11: // VT - v-tab to line
+		case '\t': // TAB - tab to col
 		case 17: // DC1 - offset each char (until CR or ESC X)
 		case 30: // RS - set VSI
 		case 31: // US - set HSI
@@ -592,6 +601,12 @@ class Diablo630 extends Printer_Paper
 			break;
 		case '6':
 			_dir = false; // BAK
+			break;
+		case '<':	// Enable inverted horiz printing
+			break;
+		case '>':	// Disable inverted horiz printing
+			break;
+		case '7':	// Enable print suppression
 			break;
 		case '\n':
 			revindex();
@@ -648,6 +663,10 @@ class Diablo630 extends Printer_Paper
 		case 'B':	// black (normal) text
 			_red = false;
 			break;
+		case 'P':	// enable prop print
+			break;
+		case 'Q':	// disable prop print
+			break;
 		case 'U':	// shift +(_vsi/2) - subscript
 			break;
 		case 'D':	// shift -(_vsi/2) - superscript
@@ -655,6 +674,24 @@ class Diablo630 extends Printer_Paper
 		case 'T':	// make _y be top margin...
 			break;
 		case 'L':	// make _y be bottom margin...
+			break;
+		case 'C':	// clear top/bottom margins
+			break;
+		case '9':	// make _x be left margin
+			break;
+		case '0':	// make _x be right margin
+			break;
+		case '1':	// make _x be tab stop
+			break;
+		case '8':	// erase _x as tab stop
+			break;
+		case '-':	// make _x as vert-tab stop
+			break;
+		case '2':	// clear all vert/horiz tab stops
+			break;
+		case '?':	// enable auto-CR
+			break;
+		case '!':	// disable auto-CR
 			break;
 		// Juki printer extensions
 		case 'H':

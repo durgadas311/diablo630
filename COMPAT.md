@@ -6,21 +6,27 @@ Sequence | Meaning | Supported
 ---------|---------|----------
 ESC BS | Micro BS | Not Yet
 ESC LF | Reverse LF | Yes
+ESC FF n | Set lines/page | Not Yet
+ESC VT n | Absolute Vert-tab to line | Not Yet
+ESC TAB n | Absolute tab to col | Not Yet
 ESC DC1 n | Character offset | Not Yet
 ESC RS n | Set VSI | Yes
 ESC US n | Set HSI | Yes
-ESC SUB c | Init/Reset | Not Yet
+ESC 0 | Set Right Margin | Not Yet
+ESC 1 | Set Tab Stop | Not Yet
+ESC 2 | Clear All V/H Tab Stops | Not Yet
 ESC 3 | Graphics spacing | Not Yet
 ESC 4 | Normal spacing | Not Yet
 ESC 5 | Forward Print | Yes
 ESC 6 | Backward Print | Yes
+ESC 7 | Enable print suppression | Not Yet
+ESC 8 | Erase Tab Stop | Not Yet
+ESC 9 | Set Left Margin | Not Yet
 ESC A | Alt Color (Red) | Not Yet
 ESC B | Norm Color (Black) | Not Yet
-ESC C | ? | Not Yet
+ESC C | Clear top/bottom margins | Not Yet
 ESC D | Superscript shift | Not Yet
 ESC E | Begin underscore | Not Yet
-ESC F | ? | Not Yet
-ESC G | ? | Not Yet
 ESC H | (Juki) &#167; | Yes
 ESC I | (Juki) &#163; | Yes
 ESC J | (Juki) &#168; | Yes
@@ -35,13 +41,25 @@ ESC R | End Underscore | Not Yet
 ESC S | Reset CSI to dipswitch | Not Yet
 ESC T | Set Top Margin | Not Yet
 ESC U | Subscript shift | Not Yet
-ESC V | ? | Not Yet
 ESC W | Begin shadow | Not Yet
 ESC X | Cancel modes | Not Yet
 ESC Y | (Juki) &#162; | Yes
 ESC Z | (Juki) &#172; | Yes
+ESC ? | Enable Auto-CR | Not Yet
+ESC ! | Disable Auto-CR | Not Yet
+ESC - | Set Vert-Tab Stop | Not Yet
 ESC = | Auto Center | Not Yet
 ESC & | End bold/shadow | Not Yet
 ESC % | Carriage settle time | N/A
+ESC < | Enable inverted printing | Not Yet
+ESC > | Disable inverted printing | Not Yet
 ESC \ | Disable auto-rev-print | N/A
 ESC / | Restore auto-rev-print | N/A
+
+HyPlot is not supported.
+
+Remote Diagnostics are not supported.
+
+Feeder Controls are not supported.
+
+Program mode is not supported.

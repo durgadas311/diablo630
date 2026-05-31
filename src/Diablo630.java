@@ -268,10 +268,12 @@ class Diablo630 extends Printer_Paper
 				_font = _font.deriveFont(atr);
 			}
 			super.init(_font, _fa);
+			_font_chg = false;
 		}
-		_hsi = 72 / _cpi;
-		_vsi = 72 / _lpi;	// trivial
+		_hsi = 72.0f / _cpi;
+		_vsi = 72.0f / _lpi;	// trivial
 		_fw = _hsi;	// "natural" pitch
+//System.err.format("_hsi=%f width=%f\n", _hsi, _fw);
 		setPaper(_lm, _tm);
 	}
 

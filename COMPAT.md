@@ -4,7 +4,7 @@ ESC sequences
 
 Sequence | Meaning | Supported
 ---------|---------|----------
-ESC BS | Micro BS | Not Yet
+ESC BS | Micro BS | Yes
 ESC LF | Reverse LF | Yes
 ESC FF n | Set lines/page | Not Yet
 ESC VT n | Absolute Vert-tab to line | Yes
@@ -56,10 +56,7 @@ ESC > | Disable inverted printing | Not Yet
 ESC \ | Disable auto-rev-print | N/A
 ESC / | Restore auto-rev-print | N/A
 
-HyPlot is not supported.
-
-Remote Diagnostics are not supported.
-
-Feeder Controls are not supported.
-
-Program mode is not supported.
+- HyPlot is not supported.
+- Remote Diagnostics are not supported.
+- Feeder Controls are not supported.
+- Program mode is not supported.

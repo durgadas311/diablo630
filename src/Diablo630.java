@@ -535,6 +535,11 @@ class Diablo630 extends Printer_Paper
 		if (_x >= _pwx) _x = _pwx - 1;
 	}
 
+	private void bk1tic() {
+		_x -= 0.6f; // 1/120 == 0.6 pt
+		if (_x < 0) _x = 0;
+	}
+
 	private void bkspace() {
 		_x -= _hsi + _off;
 		if (_x < 0) _x = 0;
@@ -673,7 +678,8 @@ class Diablo630 extends Printer_Paper
 			_off = 0.0f;
 			break;
 		case '\b':	// backspace -1/120
-			// TODO: must compute spacing in Points... 
+			bk1tic();
+			_adjacent = false;
 			break;
 		case '=':	// auto center (until CR/LF/FF or ESC X discard)
 			_cntr = true;

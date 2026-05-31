@@ -1,0 +1,47 @@
+# Compatibility
+
+ESC sequences
+
+Sequence | Meaning | Supported
+---------|---------|----------
+ESC BS | Micro BS | Not Yet
+ESC LF | Reverse LF | Yes
+ESC DC1 n | Character offset | Not Yet
+ESC RS n | Set VSI | Yes
+ESC US n | Set HSI | Yes
+ESC SUB c | Init/Reset | Not Yet
+ESC 3 | Graphics spacing | Not Yet
+ESC 4 | Normal spacing | Not Yet
+ESC 5 | Forward Print | Yes
+ESC 6 | Backward Print | Yes
+ESC A | Alt Color (Red) | Not Yet
+ESC B | Norm Color (Black) | Not Yet
+ESC C | ? | Not Yet
+ESC D | Superscript shift | Not Yet
+ESC E | Begin underscore | Not Yet
+ESC F | ? | Not Yet
+ESC G | ? | Not Yet
+ESC H | (Juki) &#167; | Yes
+ESC I | (Juki) &#163; | Yes
+ESC J | (Juki) &#168; | Yes
+ESC K | (Juki) &#231; | Yes
+ESC L | Set Bottom Margin | Not Yet
+ESC M | Auto Justify | Not Yet
+ESC N | Clear carriage settle | N/A
+ESC O | Begin bold/overstrike | Not Yet
+ESC P | Enable Prop spacing | Not Yet
+ESC Q | Disable Prop spacing | Not Yet
+ESC R | End Underscore | Not Yet
+ESC S | Reset CSI to dipswitch | Not Yet
+ESC T | Set Top Margin | Not Yet
+ESC U | Subscript shift | Not Yet
+ESC V | ? | Not Yet
+ESC W | Begin shadow | Not Yet
+ESC X | Cancel modes | Not Yet
+ESC Y | (Juki) &#162; | Yes
+ESC Z | (Juki) &#172; | Yes
+ESC = | Auto Center | Not Yet
+ESC & | End bold/shadow | Not Yet
+ESC % | Carriage settle time | N/A
+ESC \ | Disable auto-rev-print | N/A
+ESC / | Restore auto-rev-print | N/A

@@ -40,6 +40,14 @@ class Diablo630 extends Printer_Paper
 	private boolean _page_done;
 	private boolean _adjacent;
 	private boolean _dir;	// print direction
+	private boolean _undl;
+	private boolean _bold;
+	private boolean _shad;
+	private boolean _just;
+	private boolean _cntr;
+	private boolean _grph;
+	private boolean _red;
+	private float _off;
 	private int _esc;
 	private float _x, _y;
 	// These must remain stable during a job
@@ -548,6 +556,13 @@ class Diablo630 extends Printer_Paper
 	private String do_esc2(byte b) {
 		String ret = null; // non-printable...
 		switch(_esc) {
+		case 17: // DC1 - set horiz offset
+			// TODO: need to handle ESC Z = 01111111b?
+			_off = ((float)(b & 0x3f) * _hsx) / 120.0f;
+			if ((b & 0x40) != 0) {
+				_off = -_off;
+			}
+			break;
 		case 30: // RS - set VSI
 			_vsi = ((b - 1) * _vsx) / 48.0f;
 			break;
@@ -567,6 +582,7 @@ class Diablo630 extends Printer_Paper
 		String ret = null;
 		_esc = 0;
 		switch(b) {
+		case 17: // DC1 - offset each char (until CR or ESC X)
 		case 30: // RS - set VSI
 		case 31: // US - set HSI
 			_esc = b;
@@ -580,6 +596,65 @@ class Diablo630 extends Printer_Paper
 		case '\n':
 			revindex();
 			_adjacent = false;
+			break;
+		case 'E':	// start underscore
+			_undl = true;
+			break;
+		case 'O':	// start bold (double-strike)
+			_bold = true;
+			if (_shad) _shad = false; // TODO...
+			break;
+		case 'W':	// start shadow (dbl strike +1/120)
+			_shad = true;
+			if (_bold) _bold = false; // TODO...
+			break;
+		case '&':	// end bold/shadow (or CR)
+			// TODO: finish bold/shadow
+			_bold= false;
+			_shad= false;
+			break;
+		case 'R':	// end underscore (or CR/LF)
+			// TODO: perform underscore
+			_undl = false;
+			break;
+		case 'X':	// end bold/shadow/offset (or CR)
+			// TODO: finish/cancel any attrs
+			// cancel centering, discard chars
+			_undl = false;
+			_bold= false;
+			_shad= false;
+			_cntr= false;
+			_off = 0.0f;
+			break;
+		case '\b':	// backspace -1/120
+			// TODO: must compute spacing in Points... 
+			break;
+		case '=':	// auto center (until CR/LF/FF or ESC X discard)
+			_cntr = true;
+			// TODO: store chars until CR/LF/FF, then print
+			break;
+		case 'M':	// auto justify (until ESC X...)
+			_just = true;
+			break;
+		case '3':	// enter graphics spacing mode
+			_grph = true;
+			break;
+		case '4':	// exit graphics
+			_grph = false;
+			break;
+		case 'A':	// red text
+			_red = true;
+			break;
+		case 'B':	// black (normal) text
+			_red = false;
+			break;
+		case 'U':	// shift +(_vsi/2) - subscript
+			break;
+		case 'D':	// shift -(_vsi/2) - superscript
+			break;
+		case 'T':	// make _y be top margin...
+			break;
+		case 'L':	// make _y be bottom margin...
 			break;
 		// Juki printer extensions
 		case 'H':
@@ -621,6 +696,10 @@ class Diablo630 extends Printer_Paper
 			s = null;	// not strictly printable...
 			switch(b) {
 			case '\r':
+				// TODO: finish any attrs
+				// TODO: perform underscore
+				// TODO: perform centering
+				_off = 0.0f;
 				_adjacent = false;
 				_dir = true;
 				// Also resets Print Suppression, Graphics Mode,
@@ -628,6 +707,9 @@ class Diablo630 extends Printer_Paper
 				_x = 0;
 				break;
 			case '\n':
+				// TODO: finish any attrs
+				// TODO: perform underscore
+				// TODO: perform centering
 				_adjacent = false;
 				index();
 				break;
@@ -644,6 +726,8 @@ class Diablo630 extends Printer_Paper
 				tab();
 				break;
 			case 12:	// FF
+				// TODO: finish any attrs
+				// TODO: perform centering
 				_adjacent = false;
 				endPage();
 				break;

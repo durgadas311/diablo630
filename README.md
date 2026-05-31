@@ -12,3 +12,5 @@ job (and release the printer).
 The plain version "Diablo630,jar" will accept printer output on stdin.
 You can type output into the progrm, or redirect from a file that contains
 Diablo 630 compatible characters and ESC sequences.
+
+ESC command compatibility is [listed here](COMPAT.md).

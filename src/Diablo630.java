@@ -48,6 +48,7 @@ class Diablo630 extends Printer_Paper
 	private boolean _dir;	// print direction
 	private boolean _just;
 	private boolean _cntr;
+	private String _cline;
 	private boolean _grph;
 	private int _attr;
 	private float _off;
@@ -588,6 +589,15 @@ class Diablo630 extends Printer_Paper
 		_y = y;
 	}
 
+	private void doCenter() {
+		// TODO: print all chars at standard spacing?
+		_cntr = false;
+		float len = (float)_cline.length() * _fw;
+		float x = (_pwx - len) / 2f;
+		super.addPlot(_cline, x, _y, 0);
+		_cline = "";
+	}
+
 	private String do_esc2(byte b) {
 		String ret = null; // non-printable...
 		switch(_esc) {
@@ -675,6 +685,7 @@ class Diablo630 extends Printer_Paper
 			// TODO: finish/cancel any attrs
 			// cancel centering, discard chars
 			_cntr= false;
+			_cline = ""; // discard anything collected
 			_off = 0.0f;
 			// TODO: cancel underline for all related plots...
 			_attr &= ~A_X_CLEAR;
@@ -686,6 +697,7 @@ class Diablo630 extends Printer_Paper
 			break;
 		case '=':	// auto center (until CR/LF/FF or ESC X discard)
 			_cntr = true;
+			_cline = "";
 			// TODO: store chars until CR/LF/FF, then print
 			break;
 		case 'M':	// auto justify (until ESC X...)
@@ -762,6 +774,23 @@ class Diablo630 extends Printer_Paper
 		return ret;
 	}
 
+	private void prtChar(String s) {
+		if (_adjacent) {
+			if (_dir) {
+				super.appendLastPlot(s, _x, _y, _attr);
+			} else {
+				super.prependLastPlot(s, _x, _y, _attr);
+			}
+		} else {
+			super.addPlot(s, _x, _y, _attr);
+		}
+		forward();
+		_adjacent = (Math.round(_hsi + _off) == Math.round(_fw));
+if (false && !_adjacent) {
+System.err.println("Not adjacent: " + _hsi + " vs " + _fw);
+}
+	}
+
 	public boolean do_char(byte b) {
 		if (_cons != null) {
 			if (!timer.isRunning()) {
@@ -788,6 +817,9 @@ class Diablo630 extends Printer_Paper
 				_dir = true;
 				// Also resets Print Suppression, Graphics Mode,
 				// Offset, Bold, Shadow, Auto Center.
+				if (_cntr) {
+					doCenter();
+				}
 				_x = 0;
 				break;
 			case '\n':
@@ -796,6 +828,9 @@ class Diablo630 extends Printer_Paper
 				// TODO: perform centering
 				_attr &= ~A_LF_CLEAR;
 				_adjacent = false;
+				if (_cntr) {
+					doCenter();
+				}
 				index();
 				break;
 			case '\b':
@@ -814,6 +849,9 @@ class Diablo630 extends Printer_Paper
 				// TODO: finish any attrs
 				// TODO: perform centering
 				_adjacent = false;
+				if (_cntr) {
+					doCenter();
+				}
 				endPage();
 				break;
 			case 27:	// ESC
@@ -842,20 +880,11 @@ class Diablo630 extends Printer_Paper
 		}
 		if (s != null) {
 			// TODO: handle _attr changes without !_adjacent?
-			if (_adjacent) {
-				if (_dir) {
-					super.appendLastPlot(s, _x, _y, _attr);
-				} else {
-					super.prependLastPlot(s, _x, _y, _attr);
-				}
-			} else {
-				super.addPlot(s, _x, _y, _attr);
+			if (_cntr) { // overrides everything
+				_cline += s;
+			} else  {
+				prtChar(s);
 			}
-			forward();
-			_adjacent = (Math.round(_hsi + _off) == Math.round(_fw));
-if (false && !_adjacent) {
-System.err.println("Not adjacent: " + _hsi + " vs " + _fw);
-}
 		}
 		return _page_done;
 	}

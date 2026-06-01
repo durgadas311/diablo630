@@ -48,7 +48,7 @@ ESC Z | (Juki) &#172; | Yes
 ESC ? | Enable Auto-CR | Not Yet
 ESC ! | Disable Auto-CR | Not Yet
 ESC - | Set Vert-Tab Stop | Not Yet
-ESC = | Auto Center | Not Yet
+ESC = | Auto Center | Yes (limited)
 ESC & | End bold/shadow | Yes
 ESC % | Carriage settle time | N/A
 ESC < | Enable inverted printing | Not Yet

@@ -15,8 +15,8 @@ ESC US n | Set HSI | Yes
 ESC 0 | Set Right Margin | Not Yet
 ESC 1 | Set Tab Stop | Not Yet
 ESC 2 | Clear All V/H Tab Stops | Not Yet
-ESC 3 | Graphics spacing | Not Yet
-ESC 4 | Normal spacing | Not Yet
+ESC 3 | Graphics spacing | Yes
+ESC 4 | Normal spacing | Yes
 ESC 5 | Forward Print | Yes
 ESC 6 | Backward Print | Yes
 ESC 7 | Enable print suppression | Not Yet

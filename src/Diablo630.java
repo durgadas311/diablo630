@@ -521,6 +521,11 @@ class Diablo630 extends Printer_Paper
 	}
 
 	private void index() {
+		if (_grph) {
+			_y += 1.5f;	// pts, 1/48"
+			if (_y >= _phx) _y = _phx - 1;
+			return;
+		}
 		_y += _vsi;
 		if (_y >= _phx) {
 			endPage();
@@ -528,6 +533,11 @@ class Diablo630 extends Printer_Paper
 	}
 
 	private void revindex() {
+		if (_grph) {
+			_y -= 1.5f;	// pts, 1/48"
+			if (_y < 0) _y = 0;
+			return;
+		}
 		_y -= _vsi;
 		if (_y < 0) _y = 0;
 	}
@@ -559,15 +569,26 @@ class Diablo630 extends Printer_Paper
 	}
 
 	private void forward() {
-		if (_dir) {
+		if (_grph) {
+			_x += 1.2f;	// pts, 1/60" (2/120")
+			if (_x >= _pwx) _x = _pwx - 1;
+		} else if (_dir) {
 			space();
 		} else {
 			bkspace();
 		}
 	}
 
+	private void advance() {
+		if (_grph) return;
+		forward();
+	}
+
 	private void backward() {
-		if (_dir) {
+		if (_grph) {
+			_x -= 1.2f;	// pts, 1/60" (2/120")
+			if (_x < 0) _x = 0;
+		} else if (_dir) {
 			bkspace();
 		} else {
 			space();
@@ -794,7 +815,7 @@ class Diablo630 extends Printer_Paper
 		} else {
 			super.addPlot(s, _x, _y, _attr);
 		}
-		forward();
+		advance();
 		_adjacent = (Math.round(_hsi + _off) == Math.round(_fw));
 if (false && !_adjacent) {
 System.err.println("Not adjacent: " + _hsi + " vs " + _fw);
@@ -814,13 +835,14 @@ System.err.println("Not adjacent: " + _hsi + " vs " + _fw);
 		String s = null;
 		if (_esc > 0) {
 			s = do_esc(b);
-		} else if (b < ' ') { // control characters... incl BLANK
+		} else if (b <= ' ') { // control characters... incl BLANK
 			s = null;	// not strictly printable...
 			switch(b) {
 			case '\r':
 				// TODO: finish any attrs
 				// TODO: perform underscore
 				// TODO: perform centering
+				_grph = false;
 				_off = 0.0f;
 				_attr &= ~A_CR_CLEAR;
 				_adjacent = false;

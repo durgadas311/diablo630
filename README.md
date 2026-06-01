@@ -17,3 +17,5 @@ ESC command compatibility is [listed here](COMPAT.md).
 
 An [example of output](examples/ws-print.pdf)
 from WordStar printing PRINT.TST from distribution disk.
+Note: first and last pages are intentionally blank, due to
+WordStar using extra Form Feed characters.

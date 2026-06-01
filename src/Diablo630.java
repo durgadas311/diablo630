@@ -520,6 +520,10 @@ class Diablo630 extends Printer_Paper
 		_y = 0;
 	}
 
+	private boolean closeEnough(float a, float b) {
+		return (Math.round(a * 10f) == Math.round(b * 10f));
+	}
+
 	private void index() {
 		if (_grph) {
 			_y += 1.5f;	// pts, 1/48"
@@ -655,6 +659,13 @@ class Diablo630 extends Printer_Paper
 			_hsi = ((b - 1) * _hsx) / 120.0f;
 //System.err.format("_hsi=%f width=%f\n", _hsi, _fw);
 			break;
+		case '\r': // CR - ignore?
+			if (b == 'P') {
+				// TODO: perform reset
+			}
+			break;
+		default:   // ignore all other 3-char cmds
+			break;
 		}
 		_esc = 0;
 		return ret;
@@ -669,17 +680,25 @@ class Diablo630 extends Printer_Paper
 		switch(b) {
 		case 12: // FF - set lines/page
 		case 11: // VT - v-tab to line
+		case '\r': // CR - ignore these 3-char cmds
+		case 26:   // SUB - ignore these 3-char cmds
+		case 25:   // EM - ignore these 3-char cmds
 		case '\t': // TAB - tab to col
-		case 17: // DC1 - offset each char (until CR or ESC X)
-		case 30: // RS - set VSI
-		case 31: // US - set HSI
+		case 17:   // DC1 - offset each char (until CR or ESC X)
+		case 30:   // RS - set VSI
+		case 31:   // US - set HSI
 			_esc = b;
+			break;
+		case 2: // STX - unknown (emitted by WordStar)
+			// TODO: determine what this is supposed to do.
 			break;
 		case '5':
 			_dir = true; // FWD
+			_adjacent = false;
 			break;
 		case '6':
 			_dir = false; // BAK
+			_adjacent = false;
 			break;
 		case '<':	// Enable inverted horiz printing
 			break;
@@ -801,6 +820,9 @@ class Diablo630 extends Printer_Paper
 		case 'Z':
 			ret = "\u00AC";
 			break;
+		default:
+			//System.err.format("Unknown ESC %02x\n", b);
+			break;
 		}
 		return ret;
 	}
@@ -816,10 +838,7 @@ class Diablo630 extends Printer_Paper
 			super.addPlot(s, _x, _y, _attr);
 		}
 		advance();
-		_adjacent = (Math.round(_hsi + _off) == Math.round(_fw));
-if (false && !_adjacent) {
-System.err.println("Not adjacent: " + _hsi + " vs " + _fw);
-}
+		_adjacent = closeEnough(_hsi + _off, _fw);
 	}
 
 	private void doBlank() {

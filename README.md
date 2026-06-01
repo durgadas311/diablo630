@@ -14,3 +14,6 @@ You can type output into the progrm, or redirect from a file that contains
 Diablo 630 compatible characters and ESC sequences.
 
 ESC command compatibility is [listed here](COMPAT.md).
+
+An [example of output](examples/ws-print.pdf)
+from WordStar printing PRINT.TST from distribution disk.

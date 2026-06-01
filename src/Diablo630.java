@@ -339,6 +339,10 @@ class Diablo630 extends Printer_Paper
 			if (fargs.length != 3) {
 			}
 		}
+		p = props.getProperty("diablo630_alt_color");
+		if (p != null) {
+			_alt = new Color(Integer.valueOf(p, 16));
+		}
 		p = props.getProperty("diablo630_paper");
 		if (p != null) {
 			pargs = p.split("\\s");
@@ -388,6 +392,8 @@ class Diablo630 extends Printer_Paper
 				pargs = arg.substring(6).split(",");
 			} else if (arg.equals("nogui")) {
 				gui = false;
+			} else if (arg.startsWith("alt_color=")) {
+				_alt = new Color(Integer.valueOf(arg.substring(10), 16));
 			}
 		}
 		if (fargs != null) {

@@ -15,6 +15,7 @@ class Printer_Paper
 	float _fa;
 	int _off_x, _off_y;
 	int _pwx, _phx;
+	Color _alt = Color.red;
 
 	public void init(Font font, float fa) {
 		__font = font;
@@ -129,7 +130,7 @@ class Printer_Paper
 		for (i = 0; i < _xplots; ++i) {
 			if ((_plotArray[i].attr & A_RED) != 0) {
 				if (!red) {
-					g2d.setColor(Color.red);
+					g2d.setColor(_alt);
 					red = true;
 				}
 			} else {

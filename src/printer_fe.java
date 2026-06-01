@@ -19,11 +19,12 @@ public class printer_fe {
 		//argv.add("lpi=6");
 		//argv.add("font=Monospaced,PLAIN,12");
 		front_end = new Diablo630(new Properties(), argv, System.in);
-		String file;
-		if (args.length > 0) {
-			file = args[0];
-		} else {
-			file = "out.ps";
+		String file = "out.ps";
+		for (String arg : args) {
+			if (arg.indexOf("=") > 0) continue;
+			if (arg.equals("nogui")) continue;
+			file = arg;
+			break;
 		}
 		front_end.runPrinter(file);
 		// If this returns, we are really done...

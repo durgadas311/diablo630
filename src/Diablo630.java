@@ -20,10 +20,13 @@ class Diablo630 extends Printer_Paper
 	implements ActionListener, Runnable
 {
 	static final int A_X_CLEAR = (Printer_Paper.A_SHAD |
+					Printer_Paper.A_BOLD |
 					Printer_Paper.A_UNDL);
 	static final int A_CR_CLEAR = (Printer_Paper.A_SHAD |
+					Printer_Paper.A_BOLD |
 					Printer_Paper.A_UNDL);
 	static final int A_LF_CLEAR = (Printer_Paper.A_SHAD |
+					Printer_Paper.A_BOLD |
 					Printer_Paper.A_UNDL);
 	int _pages;
 	int _partial;
@@ -672,7 +675,7 @@ class Diablo630 extends Printer_Paper
 			_adjacent = false;
 			break;
 		case 'O':	// start bold (double-strike)
-			_attr |= Printer_Paper.A_SHAD; // for now, same as shadow
+			_attr |= Printer_Paper.A_BOLD;
 			_adjacent = false;
 			break;
 		case 'W':	// start shadow (dbl strike +1/120)
@@ -681,6 +684,7 @@ class Diablo630 extends Printer_Paper
 			break;
 		case '&':	// end bold/shadow (or CR)
 			_attr &= ~Printer_Paper.A_SHAD;
+			_attr &= ~Printer_Paper.A_BOLD;
 			_adjacent = false;
 			break;
 		case 'R':	// end underscore (or CR/LF)

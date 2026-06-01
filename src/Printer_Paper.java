@@ -19,6 +19,7 @@ class Printer_Paper
 
 	public void init(Font font, float fa) {
 		__font = font;
+		__bfont = __font.deriveFont(Font.BOLD);
 		_fa = fa;
 	}
 
@@ -48,6 +49,7 @@ class Printer_Paper
 	}
 
 	private Font __font;
+	private Font __bfont;
 
 	public Font getFont() { return __font; }
 
@@ -139,9 +141,14 @@ class Printer_Paper
 					red = false;
 				}
 			}
+			if ((_plotArray[i].attr & A_BOLD) != 0) {
+				g2d.setFont(__bfont);
+			}
 			g2d.drawString(_plotArray[i].s, _plotArray[i].x,
 					_plotArray[i].y + _fa);
-			if ((_plotArray[i].attr & A_SHAD) != 0) {
+			if ((_plotArray[i].attr & A_BOLD) != 0) {
+				g2d.setFont(__font);
+			} else if ((_plotArray[i].attr & A_SHAD) != 0) {
 				g2d.drawString(_plotArray[i].s, _plotArray[i].x + 0.6f,
 						_plotArray[i].y + _fa);
 			}

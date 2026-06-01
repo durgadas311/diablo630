@@ -34,7 +34,7 @@ ESC K | (Juki) &#231; | Yes
 ESC L | Set Bottom Margin | Not Yet
 ESC M | Auto Justify | Not Yet
 ESC N | Clear carriage settle | N/A
-ESC O | Begin bold/overstrike | Yes (as Shadow)
+ESC O | Begin bold/overstrike | Yes
 ESC P | Enable Prop spacing | Not Yet
 ESC Q | Disable Prop spacing | Not Yet
 ESC R | End Underscore | Yes

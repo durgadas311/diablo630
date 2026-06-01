@@ -19,6 +19,12 @@ import javax.print.attribute.standard.*;
 class Diablo630 extends Printer_Paper
 	implements ActionListener, Runnable
 {
+	static final int A_X_CLEAR = (Printer_Paper.A_SHAD |
+					Printer_Paper.A_UNDL);
+	static final int A_CR_CLEAR = (Printer_Paper.A_SHAD |
+					Printer_Paper.A_UNDL);
+	static final int A_LF_CLEAR = (Printer_Paper.A_SHAD |
+					Printer_Paper.A_UNDL);
 	int _pages;
 	int _partial;
 	boolean gui = true;
@@ -40,13 +46,10 @@ class Diablo630 extends Printer_Paper
 	private boolean _page_done;
 	private boolean _adjacent;
 	private boolean _dir;	// print direction
-	private boolean _undl;
-	private boolean _bold;
-	private boolean _shad;
 	private boolean _just;
 	private boolean _cntr;
 	private boolean _grph;
-	private boolean _red;
+	private int _attr;
 	private float _off;
 	private int _esc;
 	private float _x, _y;
@@ -649,33 +652,33 @@ class Diablo630 extends Printer_Paper
 			_adjacent = false;
 			break;
 		case 'E':	// start underscore
-			_undl = true;
+			_attr |= Printer_Paper.A_UNDL;
+			_adjacent = false;
 			break;
 		case 'O':	// start bold (double-strike)
-			_bold = true;
-			if (_shad) _shad = false; // TODO...
+			_attr |= Printer_Paper.A_SHAD; // for now, same as shadow
+			_adjacent = false;
 			break;
 		case 'W':	// start shadow (dbl strike +1/120)
-			_shad = true;
-			if (_bold) _bold = false; // TODO...
+			_attr |= Printer_Paper.A_SHAD;
+			_adjacent = false;
 			break;
 		case '&':	// end bold/shadow (or CR)
-			// TODO: finish bold/shadow
-			_bold= false;
-			_shad= false;
+			_attr &= ~Printer_Paper.A_SHAD;
+			_adjacent = false;
 			break;
 		case 'R':	// end underscore (or CR/LF)
-			// TODO: perform underscore
-			_undl = false;
+			_attr &= ~Printer_Paper.A_UNDL;
+			_adjacent = false;
 			break;
 		case 'X':	// end bold/shadow/offset (or CR)
 			// TODO: finish/cancel any attrs
 			// cancel centering, discard chars
-			_undl = false;
-			_bold= false;
-			_shad= false;
 			_cntr= false;
 			_off = 0.0f;
+			// TODO: cancel underline for all related plots...
+			_attr &= ~A_X_CLEAR;
+			_adjacent = false;
 			break;
 		case '\b':	// backspace -1/120
 			bk1tic();
@@ -695,10 +698,12 @@ class Diablo630 extends Printer_Paper
 			_grph = false;
 			break;
 		case 'A':	// red text
-			_red = true;
+			_attr |= Printer_Paper.A_RED;
+			_adjacent = false;
 			break;
 		case 'B':	// black (normal) text
-			_red = false;
+			_attr &= ~Printer_Paper.A_RED;
+			_adjacent = false;
 			break;
 		case 'P':	// enable prop print
 			break;
@@ -778,6 +783,7 @@ class Diablo630 extends Printer_Paper
 				// TODO: perform underscore
 				// TODO: perform centering
 				_off = 0.0f;
+				_attr &= ~A_CR_CLEAR;
 				_adjacent = false;
 				_dir = true;
 				// Also resets Print Suppression, Graphics Mode,
@@ -788,6 +794,7 @@ class Diablo630 extends Printer_Paper
 				// TODO: finish any attrs
 				// TODO: perform underscore
 				// TODO: perform centering
+				_attr &= ~A_LF_CLEAR;
 				_adjacent = false;
 				index();
 				break;
@@ -834,14 +841,15 @@ class Diablo630 extends Printer_Paper
 			}
 		}
 		if (s != null) {
+			// TODO: handle _attr changes without !_adjacent?
 			if (_adjacent) {
 				if (_dir) {
-					super.appendLastPlot(s, _x, _y);
+					super.appendLastPlot(s, _x, _y, _attr);
 				} else {
-					super.prependLastPlot(s, _x, _y);
+					super.prependLastPlot(s, _x, _y, _attr);
 				}
 			} else {
-				super.addPlot(s, _x, _y);
+				super.addPlot(s, _x, _y, _attr);
 			}
 			forward();
 			_adjacent = (Math.round(_hsi + _off) == Math.round(_fw));

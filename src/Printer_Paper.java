@@ -5,6 +5,13 @@ import java.awt.print.*;
 
 class Printer_Paper
 {
+	static final int A_RED = 0x001;
+	static final int A_UNDL = 0x002;
+	static final int A_BOLD = 0x004;	// same as A_SHAD?
+	static final int A_SHAD = 0x008;
+	static final int A_JUST = 0x010;
+	static final int A_CNTR = 0x020;
+
 	float _fa;
 	int _off_x, _off_y;
 	int _pwx, _phx;
@@ -49,14 +56,16 @@ class Printer_Paper
 	}
 
 	class plot {
-		plot(String s_, float x_, float y_) {
+		plot(String s_, float x_, float y_, int attr_) {
 			s = s_;
 			x = x_;
 			y = y_;
+			attr = attr_;
 		}
 		public String s;
 		public float x;
 		public float y;
+		public int attr;
 	}
 
 	private plot[] _plotArray;
@@ -64,7 +73,7 @@ class Printer_Paper
 	private int _xplots;
 	private int _last = -1;
 
-	public void addPlot(String s, float x, float y) {
+	public void addPlot(String s, float x, float y, int attr) {
 		// _sorted = false; // can be smarter?
 		int n = _xplots;
 		if (_xplots + 1 > _nplots) {
@@ -76,29 +85,32 @@ class Printer_Paper
 			}
 			_plotArray = p;
 		}
-		_plotArray[n] = new plot(s, x + _off_x, y + _off_y);
+		_plotArray[n] = new plot(s, x + _off_x, y + _off_y, attr);
 		++_xplots;
 		_last = n;
 	}
 
-	public void appendLastPlot(String s, float x, float y) {
+	public void appendLastPlot(String s, float x, float y, int attr) {
 		if (_last < 0) {
-			addPlot(s, x, y);
+			addPlot(s, x, y, attr);
 		} else {
 			_plotArray[_last].s += s;
+			// _plotArray[_last].attr |= attr; // what's right?
 		}
 	}
 
-	public void prependLastPlot(String s, float x, float y) {
+	public void prependLastPlot(String s, float x, float y, int attr) {
 		if (_last < 0) {
-			addPlot(s, x, y);
+			addPlot(s, x, y, attr);
 		} else {
 			_plotArray[_last].s = s + _plotArray[_last].s;
 			_plotArray[_last].x = x + _off_x;
+			// _plotArray[_last].attr |= attr; // what's right?
 		}
 	}
 
 	public int print(Graphics g, PageFormat pf, int pageIndex, PaperPaintable bkg) {
+		boolean red = false;
 		if (pageIndex == 0) {}
 		Graphics2D g2d = (Graphics2D)g;
 		if (bkg != null) {
@@ -115,8 +127,28 @@ class Printer_Paper
 
 		int i = 0;
 		for (i = 0; i < _xplots; ++i) {
+			if ((_plotArray[i].attr & A_RED) != 0) {
+				if (!red) {
+					g2d.setColor(Color.red);
+					red = true;
+				}
+			} else {
+				if (red) {
+					g2d.setColor(Color.black);
+					red = false;
+				}
+			}
 			g2d.drawString(_plotArray[i].s, _plotArray[i].x,
 					_plotArray[i].y + _fa);
+			if ((_plotArray[i].attr & A_SHAD) != 0) {
+				g2d.drawString(_plotArray[i].s, _plotArray[i].x + 0.6f,
+						_plotArray[i].y + _fa);
+			}
+			if ((_plotArray[i].attr & A_UNDL) != 0) {
+				int len = _plotArray[i].s.length();
+				g2d.drawString(String.valueOf('_').repeat(len),
+					_plotArray[i].x, _plotArray[i].y + _fa);
+			}
 		}
 		return Printable.PAGE_EXISTS;
 	}

@@ -22,11 +22,11 @@ ESC 6 | Backward Print | Yes
 ESC 7 | Enable print suppression | Not Yet
 ESC 8 | Erase Tab Stop | Not Yet
 ESC 9 | Set Left Margin | Not Yet
-ESC A | Alt Color (Red) | Not Yet
-ESC B | Norm Color (Black) | Not Yet
+ESC A | Alt Color (Red) | Yes
+ESC B | Norm Color (Black) | Yes
 ESC C | Clear top/bottom margins | Not Yet
 ESC D | Superscript shift | Yes
-ESC E | Begin underscore | Not Yet
+ESC E | Begin underscore | Yes
 ESC H | (Juki) &#167; | Yes
 ESC I | (Juki) &#163; | Yes
 ESC J | (Juki) &#168; | Yes
@@ -34,22 +34,22 @@ ESC K | (Juki) &#231; | Yes
 ESC L | Set Bottom Margin | Not Yet
 ESC M | Auto Justify | Not Yet
 ESC N | Clear carriage settle | N/A
-ESC O | Begin bold/overstrike | Not Yet
+ESC O | Begin bold/overstrike | Yes (as Shadow)
 ESC P | Enable Prop spacing | Not Yet
 ESC Q | Disable Prop spacing | Not Yet
-ESC R | End Underscore | Not Yet
+ESC R | End Underscore | Yes
 ESC S | Reset CSI to dipswitch | Not Yet
 ESC T | Set Top Margin | Not Yet
 ESC U | Subscript shift | Yes
-ESC W | Begin shadow | Not Yet
-ESC X | Cancel modes | Not Yet
+ESC W | Begin shadow | Yes
+ESC X | Cancel modes | Yes, mostly
 ESC Y | (Juki) &#162; | Yes
 ESC Z | (Juki) &#172; | Yes
 ESC ? | Enable Auto-CR | Not Yet
 ESC ! | Disable Auto-CR | Not Yet
 ESC - | Set Vert-Tab Stop | Not Yet
 ESC = | Auto Center | Not Yet
-ESC & | End bold/shadow | Not Yet
+ESC & | End bold/shadow | Yes
 ESC % | Carriage settle time | N/A
 ESC < | Enable inverted printing | Not Yet
 ESC > | Disable inverted printing | Not Yet

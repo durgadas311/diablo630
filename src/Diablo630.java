@@ -822,6 +822,17 @@ System.err.println("Not adjacent: " + _hsi + " vs " + _fw);
 }
 	}
 
+	private void doBlank() {
+		if (_cntr) { // overrides everything
+			_cline += ' ';
+		} if (_grph) {
+			_adjacent = false;
+			forward();
+		} else {
+			prtChar(" ");
+		}
+	}
+
 	public boolean do_char(byte b) {
 		if (_cons != null) {
 			if (!timer.isRunning()) {
@@ -870,8 +881,7 @@ System.err.println("Not adjacent: " + _hsi + " vs " + _fw);
 				backward();
 				break;
 			case ' ':
-				_adjacent = false;
-				forward();
+				doBlank();
 				break;
 			case '\t':
 				_adjacent = false;

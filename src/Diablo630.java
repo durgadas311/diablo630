@@ -42,6 +42,8 @@ class Diablo630 extends Printer_Paper
 	private FontDialog _fset;
 	private InputStream _inp;
 	SimpleDateFormat tagFmt = new SimpleDateFormat("yyyyMMddHHmmss.SSS");
+	SimpleDateFormat todFmt = new SimpleDateFormat("HHmmss.SSS");
+	SimpleDateFormat datFmt = new SimpleDateFormat("yyyyMMdd");
 
 	private boolean _changed;
 	private boolean _font_chg;
@@ -75,12 +77,86 @@ class Diablo630 extends Printer_Paper
 	private float _pw, _ph;	// adjusted for orientation
 	private float _ppw, _pph;	// _ppw is always short edge
 	private int _pwx, _phx;
-	private enum Actions { NONE, DISCARD, SAVE, QUEUE };
+	private enum Actions { NONE, DISCARD, SAVE, QUEUE, SAVE_QUEUE };
 	private Actions action = Actions.NONE;
 	private String[] queueJob = null;
+	private String saveJob = null;
+	private int jobId;
 
 	private PipedInputStream _pipe_i;
 	private PipedOutputStream _pipe_o;
+
+	private String doSubs(File dir, String pat) {
+		String fn = pat;
+
+		if (fn.indexOf("%x") >= 0) {
+			String[] ss = fn.split("%x", 2);
+			try {
+				File tf = File.createTempFile(ss[0], ss[1], dir);
+				return tf.getName();
+			} catch (Exception ee) { }
+			// punt...
+			fn = fn.replaceAll("%x", tagFmt.format(new Date()));
+		}
+		if (pat.indexOf("%j") >= 0) {
+			fn = fn.replaceAll("%j", String.format("%d", jobId));
+		}
+		if (pat.indexOf("%s") >= 0) {
+			fn = fn.replaceAll("%s", tagFmt.format(new Date()));
+		}
+		if (pat.indexOf("%t") >= 0) {
+			fn = fn.replaceAll("%t", todFmt.format(new Date()));
+		}
+		if (pat.indexOf("%d") >= 0) {
+			fn = fn.replaceAll("%d", datFmt.format(new Date()));
+		}
+		// TODO: more substitutions
+		return fn;
+	}
+
+	private boolean processJobEnd(String[] ss) {
+		for (int x = 0; x < ss.length; ++x) {
+			if (ss[x].equalsIgnoreCase("NONE")) {
+				action = Actions.NONE;
+			} else if (ss[x].equalsIgnoreCase("DISCARD")) {
+				action = Actions.DISCARD;
+			} else if (ss[x].equalsIgnoreCase("SAVE")) {
+				if (action == Actions.QUEUE) {
+					action = Actions.SAVE_QUEUE;
+				} else {
+					action = Actions.SAVE;
+				}
+				saveJob = "job%d.ps";
+				if (x + 1 < ss.length) {
+					++x;
+					if (!ss[x].equals("-")) {
+						saveJob = ss[x];
+					}
+				}
+			} else if (x + 1 < ss.length && ss[x].equalsIgnoreCase("QUEUE")) {
+				if (action == Actions.SAVE) {
+					action = Actions.SAVE_QUEUE;
+				} else {
+					action = Actions.QUEUE;
+				}
+				// Replace "%f" with filename at run time...
+				// Other replacements?
+				++x;
+				int y;
+				for (y = x; y < ss.length; ++y) {
+					if (ss[y].equals("--")) break;
+				}
+				queueJob = new String[y - x];
+				int z = 0;
+				while (x < y) {
+					queueJob[z++] = ss[x++];
+				}
+			} else {
+				return true;	// error
+			}
+		}
+		return false;
+	}
 
 	public DocAttributeSet getDocAttrs() {
 		return _dset;
@@ -102,6 +178,7 @@ class Diablo630 extends Printer_Paper
 	}
 
 	public void endJob() {
+		++jobId;
 		if (_cons != null) {
 			timer.stop();
 		}
@@ -119,36 +196,34 @@ class Diablo630 extends Printer_Paper
 		} catch (Exception ee) {}
 		_fos = null;
 		clearPage();
+		_append = false;
 		// Check for end-of-job actions...
-		if (action == Actions.NONE) {
+		if (action == Actions.DISCARD || action == Actions.NONE) {
 			return;
 		}
-		if (action == Actions.DISCARD) {
-			return;
-		}
-		if (action == Actions.SAVE) {
-			if (_file == null) {
-				return;
-			}
-			_append = false; // does not matter unless rename fails
-			String dir = _file.getParent();
+		String jfn = _fosName;
+		if ((action == Actions.SAVE || action == Actions.SAVE_QUEUE) &&
+								_file != null) {
+			File dir = _file.getParentFile();
 			if (dir == null) {
-				dir = ".";
+				dir = new File(System.getProperty("user.dir"));
 			}
-			String ren = String.format("%s/job%s.ps", dir,
-				tagFmt.format(new Date()));
-			File save = new File(ren);
+			String fn = doSubs(dir, saveJob);
+			File save = new File(dir, fn);
 			try {
 				_file.renameTo(save);
+				jfn = save.getAbsolutePath();;
 			} catch (Exception ee) {
-				System.err.format("Failed to rename job to %s\n", ren);
+				System.err.format("Failed to rename job to %s\n",
+							save.getAbsolutePath());
 			}
 			return;
 		}
-		if (action == Actions.QUEUE && _fosName != null) {
+		if ((action == Actions.QUEUE || action == Actions.SAVE_QUEUE) &&
+								jfn != null) {
 			String[] cmd = new String[queueJob.length];
 			for (int x = 0; x < queueJob.length; ++x) {
-				cmd[x] = queueJob[x].replaceAll("%f", _fosName);
+				cmd[x] = queueJob[x].replaceAll("%f", jfn);
 			}
 			try {
 				Process p = Runtime.getRuntime().exec(cmd);
@@ -160,7 +235,6 @@ class Diablo630 extends Printer_Paper
 			} catch (Exception ee) {
 				System.err.format("JobEnd failed: %s - %s\n", cmd[0], ee.getMessage());
 			}
-			_append = false;
 			return;
 		}
 	}
@@ -360,18 +434,7 @@ class Diablo630 extends Printer_Paper
 		p = props.getProperty("diablo630_jobend");
 		if (p != null) {
 			String[] ss = p.split("\\s");
-			if (ss.length < 1) {
-			} else if (ss[0].equalsIgnoreCase("DISCARD")) {
-				action = Actions.DISCARD;
-			} else if (ss[0].equalsIgnoreCase("SAVE")) {
-				action = Actions.SAVE;
-				// TODO: get optional filename pattern
-			} else if (ss.length > 1 && ss[0].equalsIgnoreCase("QUEUE")) {
-				action = Actions.QUEUE;
-				// Replace "%f" with filename at run time...
-				// Other replacements?
-				queueJob = Arrays.copyOfRange(ss, 1, ss.length);
-			} else {
+			if (processJobEnd(ss)) {
 				System.err.format("Invalid jobend action: %s\n", p);
 				action = Actions.NONE;
 			}
@@ -418,6 +481,8 @@ class Diablo630 extends Printer_Paper
 					_ms = MediaSizeName.NA_LETTER;
 				} else if (parg.equalsIgnoreCase("LEGAL")) {
 					_ms = MediaSizeName.NA_LEGAL;
+				} else if (parg.equalsIgnoreCase("A4")) {
+					_ms = MediaSizeName.ISO_A4;
 				} else if (parg.equalsIgnoreCase("FORMS")) {
 					_ms = PaperDialog.getForms();
 				} else if (parg.equalsIgnoreCase("PORTRAIT")) {

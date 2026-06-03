@@ -34,7 +34,7 @@ JSERIAL = $(HOME)/Downloads/jSerialComm-2.6.2.jar
 Diablo630tty.class: Diablo630tty.java
 	javac -cp .:$(JSERIAL) $?
 
-jar: Diablo630.jar Diablo630telnet.jar Diablo630Embedded.jar
+jar: Diablo630.jar Diablo630telnet.jar Diablo630tty.jar Diablo630Embedded.jar
 
 Diablo630.jar: $(D630_CLASSES) $(CORE_CLASSES) $(SUPP_CLASSES)
 	echo "Main-Class: printer_fe" >Manifest.txt

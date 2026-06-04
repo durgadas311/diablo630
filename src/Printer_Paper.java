@@ -112,6 +112,14 @@ class Printer_Paper
 		}
 	}
 
+	public void dumpLastPlot() {
+		if (_last < 0 || _plotArray == null) {
+			return;
+		}
+		System.err.format("%f,%f \"%s\" %02x\n", _plotArray[_last].x,
+			_plotArray[_last].y, _plotArray[_last].s, _plotArray[_last].attr);
+	}
+
 	public int print(Graphics g, PageFormat pf, int pageIndex, PaperPaintable bkg) {
 		boolean red = false;
 		if (pageIndex == 0) {}

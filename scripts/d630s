@@ -1,0 +1,11 @@
+#!/bin/bash
+# An example of how to run the Virtual Diablo 630
+# when using native serial ports.
+#
+# Assumes that https://github.com/durgadas311/diablo630.git was cloned
+# into ${HOME}/git. Adjust paths if you use a different location.
+
+JAR1=${HOME}/git/diablo630/bin/Diablo630tty.jar
+JAR2=${HOME}/git/diablo630/src/jserialcomm/jSerialComm-2.9.3.jar
+
+exec java -cp ${JAR1}:${JAR2} Diablo630tty "${@}"

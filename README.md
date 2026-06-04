@@ -1,5 +1,8 @@
 # Virtual Diablo 630 Printer
 
+This project uses submodules. After clone, run "git submodule init".
+Refresh with "git submodule update".
+
 The program accepts Diable 630 (Juki 6100) input and produces PostScript
 files. By default provides a GUI to allow basic printer control.
 Printing is job oriented, sending a 0FFH character to the printer

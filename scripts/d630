@@ -1,0 +1,12 @@
+#!/bin/bash
+# An example of how to run the Virtual Diablo 630.
+#
+# Assumes that https://github.com/durgadas311/diablo630.git was cloned
+# into ${HOME}/git. Adjust paths if you use a different location.
+
+# For "telnet" (TCP/IP socket) connectivity, use Diablo630telnet.jar
+# instead.
+
+JAR1=${HOME}/git/diablo630/bin/Diablo630.jar
+
+exec java -jar ${JAR1} "${@}"

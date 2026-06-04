@@ -26,13 +26,13 @@ SUPP_CLASSES = \
 		Printer_Paper$$plot.class \
 		SuffFileChooser$$TapeProt.class
 
-JSERIAL = $(HOME)/Downloads/jSerialComm-2.6.2.jar
+JSERIAL = jserialcomm/jSerialComm-2.9.3.jar
 
 %.class: %.java
 	javac $?
 
-Diablo630tty.class: Diablo630tty.java
-	javac -cp .:$(JSERIAL) $?
+Diablo630tty.class: Diablo630tty.java $(JSERIAL)
+	javac -cp .:$(JSERIAL) $<
 
 jar: Diablo630.jar Diablo630telnet.jar Diablo630tty.jar Diablo630Embedded.jar
 

@@ -31,6 +31,8 @@ class Diablo630 extends Printer_Paper
 	int _pages;
 	int _partial;
 	boolean gui = true;
+	String teeName = null;
+	OutputStream tee = null;
 	PrinterConsole _cons;
 	private javax.swing.Timer timer;
 	private File _file;
@@ -173,20 +175,25 @@ class Diablo630 extends Printer_Paper
 	private void clearPage() {
 		_adjacent = false;
 		clear();
-		_x = _y = 0;
+		_y = 0;
 		_page_done = false;
 	}
 
-	public void endJob() {
+	public void endJob(int sts) {
 		++jobId;
+		if (tee != null) {
+			try {
+				tee.close();
+			} catch (Exception ee) {}
+			tee = null;
+		}
 		if (_cons != null) {
 			timer.stop();
 		}
 		//System.err.println("End of job");
-		if (_partial > 0) {
-			_partial = 0;
-			++_pages;
-		}
+		// reset page count since file is now empty
+		_pages = 0;
+		_partial = 0;
 		if (_cons != null) {
 			_cons.setPages(_pages, _partial);
 			_cons.setStatus("Done");
@@ -198,6 +205,11 @@ class Diablo630 extends Printer_Paper
 		clearPage();
 		_append = false;
 		// Check for end-of-job actions...
+		// avoid corrupting SAVE file if aborting...
+		if (sts < 0) {
+			// But would like to differentiate "failed with no output"
+			return;
+		}
 		if (action == Actions.DISCARD || action == Actions.NONE) {
 			return;
 		}
@@ -460,6 +472,12 @@ class Diablo630 extends Printer_Paper
 				gui = false;
 			} else if (arg.startsWith("alt_color=")) {
 				_alt = new Color(Integer.valueOf(arg.substring(10), 16));
+			} else if (arg.startsWith("tee=")) {
+				// only first job
+				teeName = arg.substring(4);
+				try {
+					tee = new FileOutputStream(teeName);
+				} catch (Exception ee) {}
 			}
 		}
 		if (fargs != null) {
@@ -552,6 +570,11 @@ class Diablo630 extends Printer_Paper
 			mi = new JMenuItem("End Job", KeyEvent.VK_J);
 			mi.addActionListener(this);
 			mu.add(mi);
+			if (teeName != null) {
+				mi = new JMenuItem("Restart Tee", KeyEvent.VK_T);
+				mi.addActionListener(this);
+				mu.add(mi);
+			}
 			_cons.addMenu(mu);
 
 			timer = new Timer(50, this);
@@ -909,11 +932,13 @@ class Diablo630 extends Printer_Paper
 	private void doBlank() {
 		if (_cntr) { // overrides everything
 			_cline += ' ';
-		} if (_grph) {
+		} else if (_grph) {
 			_adjacent = false;
 			forward();
 		} else {
-			prtChar(" ");
+			//prtChar(" "); // not for reverse printing?
+			_adjacent = false;
+			forward();
 		}
 	}
 
@@ -1109,6 +1134,18 @@ class Diablo630 extends Printer_Paper
 				inject(0xff);
 				return;
 			}
+			if (m.getMnemonic() == KeyEvent.VK_T) {
+				// Restart Tee file
+				// Should never get here if teeName is null,
+				// or if tee is open, but...
+				if (teeName != null) {
+					try {
+						if (tee != null) tee.close();
+						tee = new FileOutputStream(teeName);
+					} catch (Exception ee) { tee = null; }
+				}
+				return;
+			}
 		}
 		System.err.println("Unknown action event");
 	}
@@ -1150,6 +1187,9 @@ class Diablo630 extends Printer_Paper
 		} catch (Exception ee) {
 			b = -1;
 		}
+		if (tee != null) try {
+			tee.write(b);
+		} catch (Exception ee) {}
 		return b;
 	}
 
@@ -1162,8 +1202,8 @@ class Diablo630 extends Printer_Paper
 		do {
 			setNewFile();	// opens _fos
 			Print2DtoStream p2s = new Print2DtoStream(_fos, this);
-			endJob();	// closes _fos
 			status = p2s.getStatus();
+			endJob(status);	// closes _fos
 		} while (status >= 0);
 	}
 }

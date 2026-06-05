@@ -78,7 +78,7 @@ class Diablo630 extends Printer_Paper
 	// These are all derived during init/setPaper, not changed after
 	private float _pw, _ph;	// adjusted for orientation
 	private float _ppw, _pph;	// _ppw is always short edge
-	private int _pwx, _phx;
+	private int _pwx, _phx;	// duplicate of Printer_Paper vars
 	private enum Actions { NONE, DISCARD, SAVE, QUEUE, SAVE_QUEUE };
 	private Actions action = Actions.NONE;
 	private String[] queueJob = null;
@@ -416,6 +416,13 @@ class Diablo630 extends Printer_Paper
 
 	public Diablo630(Properties props, Vector<String> args, InputStream in) {
 		// args override props...
+		for (String arg : args) {
+			if (arg.indexOf("=") > 0) {
+				String[] ss = arg.split("=");
+				props.setProperty("diablo630_" + ss[0],
+						ss[1].replaceAll(",", " "));
+			}
+		}
 		int lpi = 6;
 		int cpi = 10;
 		Font font = new Font("Monospaced", Font.PLAIN, 12);
@@ -434,6 +441,10 @@ class Diablo630 extends Printer_Paper
 			if (l != 0) {
 				lpi = l;
 			}
+		}
+		p = props.getProperty("diablo630_scale");
+		if (p != null) {
+			_scale = Float.valueOf(p);
 		}
 		p = props.getProperty("diablo630_font");
 		if (p != null) {
@@ -465,34 +476,13 @@ class Diablo630 extends Printer_Paper
 				action = Actions.NONE;
 			}
 		}
-		for (String arg : args) {
-			if (arg.startsWith("cpi=")) {
-				int c = getCpi(arg.substring(4));
-				if (c != 0) {
-					cpi = c;
-				}
-			} else if (arg.startsWith("lpi=")) {
-				int l = getLpi(arg.substring(4));
-				if (l != 0) {
-					lpi = l;
-				}
-			} else if (arg.startsWith("font=")) {
-				fargs = arg.substring(5).split(",");
-				if (fargs.length != 3) {
-				}
-			} else if (arg.startsWith("paper=")) {
-				pargs = arg.substring(6).split(",");
-			} else if (arg.equals("nogui")) {
-				gui = false;
-			} else if (arg.startsWith("alt_color=")) {
-				_alt = new Color(Integer.valueOf(arg.substring(10), 16));
-			} else if (arg.startsWith("tee=")) {
-				// only first job
-				teeName = arg.substring(4);
-				try {
-					tee = new FileOutputStream(teeName);
-				} catch (Exception ee) {}
-			}
+		p = props.getProperty("diablo630_tee");
+		if (p != null) {
+			// only first job, unless reset by menu
+			teeName = p;
+			try {
+				tee = new FileOutputStream(teeName);
+			} catch (Exception ee) {}
 		}
 		if (fargs != null) {
 			// TODO: fully parse font args

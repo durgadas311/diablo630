@@ -16,6 +16,7 @@ class Printer_Paper
 	int _off_x, _off_y;
 	int _pwx, _phx;
 	Color _alt = Color.red;
+	float _scale;
 
 	public void init(Font font, float fa) {
 		__font = font;
@@ -132,6 +133,9 @@ class Printer_Paper
 		double w0 = pf.getImageableWidth();
 		double h0 = pf.getImageableHeight();
 		g2d.translate(x0, y0);
+		if (_scale > 0f) {
+			g2d.scale(_scale, _scale);
+		}
 		g2d.setFont(__font);
 
 		g2d.setColor(Color.black);

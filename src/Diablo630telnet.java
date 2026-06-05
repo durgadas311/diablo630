@@ -16,15 +16,17 @@ public class Diablo630telnet {
 	}
 	public void _main(String[] args) {
 		Properties props = new Properties();
-		String conf = System.getProperty("user.home") + "/.diablo630rc";
 		String host = null;
-		String file = "out.ps";
 		int port = -1;
 		InputStream fin = null;
 		// TODO: allow for redirect of output to log file.
+		File conf = new File("diablo630.rc");
+		if (!conf.exists()) {
+			conf = new File(System.getProperty("user.home"), ".diablo630rc");
+		}
 		for (String arg : args) {
 			if (arg.startsWith("conf=")) {
-				conf = arg.substring(5);
+				conf = new File(arg.substring(5));
 			}
 		}
 		try {
@@ -42,9 +44,9 @@ public class Diablo630telnet {
 		if (s != null) {
 			port = Integer.decode(s);
 		}
-		s = props.getProperty("diablo630_file");
-		if (s != null) {
-			file = s;
+		String file = props.getProperty("diablo630_file");
+		if (file == null) {
+			file = "out.ps";
 		}
 		for (String arg : args) {
 			if (arg.startsWith("host=")) {

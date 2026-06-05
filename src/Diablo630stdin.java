@@ -15,10 +15,13 @@ public class Diablo630stdin {
 	public void _main(String[] args) {
 		// TODO: make font (cpi/lpi) configurable
 		Properties props = new Properties();
-		String conf = System.getProperty("user.home") + "/.diablo630rc";
+		File conf = new File("diablo630.rc");
+		if (!conf.exists()) {
+			conf = new File(System.getProperty("user.home"), ".diablo630rc");
+		}
 		for (String arg : args) {
 			if (arg.startsWith("conf=")) {
-				conf = arg.substring(5);
+				conf = new File(arg.substring(5));
 			}
 		}
 		try {
@@ -35,7 +38,10 @@ public class Diablo630stdin {
 		//argv.add("lpi=6");
 		//argv.add("font=Monospaced,PLAIN,12");
 		front_end = new Diablo630(props, argv, System.in);
-		String file = "out.ps";
+		String file = props.getProperty("diablo630_file");
+		if (file == null) {
+			file = "out.ps";
+		}
 		for (String arg : args) {
 			if (arg.startsWith("file=")) {
 				file = arg.substring(5);

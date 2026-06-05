@@ -19,17 +19,19 @@ public class Diablo630tty {
 	}
 	public void _main(String[] args) {
 		Properties props = new Properties();
-		String conf = System.getProperty("user.home") + "/.diablo630rc";
 		String tty = null;
 		int baud = -1;
-		String file = "out.ps";
 		InputStream fin = null;
 		SerialPort comm;
 
 		// TODO: allow for redirect of output to log file.
+		File conf = new File("diablo630.rc");
+		if (!conf.exists()) {
+			conf = new File(System.getProperty("user.home"), ".diablo630rc");
+		}
 		for (String arg : args) {
 			if (arg.startsWith("conf=")) {
-				conf = arg.substring(5);
+				conf = new File(arg.substring(5));
 			}
 		}
 		try {
@@ -47,9 +49,9 @@ public class Diablo630tty {
 		if (s != null) {
 			baud = Integer.decode(s);
 		}
-		s = props.getProperty("diablo630_file");
-		if (s != null) {
-			file = s;
+		String file = props.getProperty("diablo630_file");
+		if (s == null) {
+			file = "out.ps";
 		}
 		for (String arg : args) {
 			if (arg.startsWith("tty=")) {

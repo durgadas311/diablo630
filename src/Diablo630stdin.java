@@ -6,11 +6,11 @@ import java.util.Properties;
 import java.awt.*;
 import java.io.*;
 
-public class printer_fe {
+public class Diablo630stdin {
 	private static Diablo630 front_end;
 
 	public static void main(String[] args) {
-		new printer_fe()._main(args);
+		new Diablo630stdin()._main(args);
 	}
 	public void _main(String[] args) {
 		// TODO: make font (cpi/lpi) configurable

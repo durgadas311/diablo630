@@ -12,7 +12,7 @@ CORE_CLASSES =	\
 		PaperPaintable.class
 
 D630_CLASSES =	\
-		printer_fe.class \
+		Diablo630stdin.class \
 		lsfonts.class \
 		genprint.class \
 		IntelHex.class
@@ -37,7 +37,7 @@ Diablo630tty.class: Diablo630tty.java $(JSERIAL)
 jar: Diablo630.jar Diablo630telnet.jar Diablo630tty.jar Diablo630Embedded.jar
 
 Diablo630.jar: $(D630_CLASSES) $(CORE_CLASSES) $(SUPP_CLASSES)
-	echo "Main-Class: printer_fe" >Manifest.txt
+	echo "Main-Class: Diablo630stdin" >Manifest.txt
 	jar -cfm $@ Manifest.txt $(foreach x,$^,'$(x)')
 
 Diablo630telnet.jar: Diablo630telnet.class $(CORE_CLASSES) $(SUPP_CLASSES)

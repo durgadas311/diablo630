@@ -281,7 +281,21 @@ class Diablo630 extends Printer_Paper
 	}
 
 	public void reset() {
-		// anything?
+		_attr = 0;
+		_dir = true;
+		_just = false;
+		_cntr = false;
+		_cline = "";
+		_grph = false;
+		_adjacent = false;
+		_off = 0;
+		_esc = 0; // not needed?
+		// _cpi, _lpi, _lm, _tm are set by config or menu - leave alone
+		_hsi = 72.0f / _cpi;
+		_vsi = 72.0f / _lpi;
+		_x = 0;
+		_page_done = true; // start over (clearPage()) on next char
+		// TODO: avoid extra blank page
 	}
 
 	class DocPaperSize extends MediaSize implements DocAttribute {
@@ -749,7 +763,12 @@ class Diablo630 extends Printer_Paper
 			break;
 		case '\r': // CR - ignore?
 			if (b == 'P') {
-				// TODO: perform reset
+				reset();
+			}
+			break;
+		case 26:   // SUB - ignore these 3-char cmds
+			if (b == 'I') {
+				reset();
 			}
 			break;
 		default:   // ignore all other 3-char cmds

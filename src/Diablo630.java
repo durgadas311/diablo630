@@ -69,8 +69,7 @@ class Diablo630 extends Printer_Paper
 	MediaSizeName _ms;
 	OrientationRequested _or;
 	PaperPaintable _bkg;
-	DocAttributeSet _dset;	// must be setup before Print2DtoStream
-	PrintRequestAttributeSet _rset;
+	PageFormat _pf;
 	private float _lm;
 	private float _tm;
 	private int _lpi;
@@ -87,6 +86,8 @@ class Diablo630 extends Printer_Paper
 
 	private PipedInputStream _pipe_i;
 	private PipedOutputStream _pipe_o;
+
+	public PageFormat getPageFormat() { return _pf; }
 
 	private String doSubs(File dir, String pat) {
 		String fn = pat;
@@ -158,14 +159,6 @@ class Diablo630 extends Printer_Paper
 			}
 		}
 		return false;
-	}
-
-	public DocAttributeSet getDocAttrs() {
-		return _dset;
-	}
-
-	public PrintRequestAttributeSet getPrtAttrs() {
-		return _rset;
 	}
 
 	public PaperPaintable getBkground() {
@@ -320,26 +313,25 @@ class Diablo630 extends Printer_Paper
 		}
 		_ppw = mz.getX(Size2DSyntax.INCH);	// always the small edge.
 		_pph = mz.getY(Size2DSyntax.INCH);
+		int pfo = PageFormat.LANDSCAPE;
 		if (or == OrientationRequested.LANDSCAPE) {
 			_pw = _pph;
 			_ph = _ppw;
 		} else if (or == OrientationRequested.PORTRAIT) {
+			pfo = PageFormat.PORTRAIT;
 			_pw = _ppw;
 			_ph = _pph;
 		} else {
 			System.err.println("Unsupported Page Orientation");
 			System.exit(1);
 		}
-		_dset = new HashDocAttributeSet();
-		_dset.add(or);
-		_dset.add(new DocPaperSize(_ppw, _pph, Size2DSyntax.INCH));
-		_dset.add(new MediaPrintableArea(0.0f, 0.0f, _ppw, _pph,
-				MediaPrintableArea.INCH));
-		_rset = new HashPrintRequestAttributeSet();
-		_rset.add(or);
-		_rset.add(new ReqPaperSize(_ppw, _pph, Size2DSyntax.INCH));
-		_rset.add(new MediaPrintableArea(0.0f, 0.0f, _ppw, _pph,
-				MediaPrintableArea.INCH));
+		Paper ppr = new Paper();
+		ppr.setSize(_ppw * 72d, _pph * 72d);
+		ppr.setImageableArea(0.0d, 0.0d, _ppw * 72d, _pph * 72d);
+		PageFormat pf = new PageFormat();
+		pf.setPaper(ppr);
+		pf.setOrientation(pfo);
+		_pf = pf;
 	}
 
 	// _hsx/_vsx must be established prior to calling this

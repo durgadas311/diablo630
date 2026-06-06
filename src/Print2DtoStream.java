@@ -4,7 +4,8 @@ import java.io.*;
 import java.awt.*;
 import java.awt.print.*;
 import javax.print.*;
-
+import javax.print.attribute.*;
+import javax.print.attribute.standard.*;
 
 /*
  * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
@@ -26,30 +27,24 @@ class Print2DtoStream implements Printable {
 	public Print2DtoStream(FileOutputStream fos, Diablo630 prtr) {
 		_prtr = prtr;
 		lastPage = -1;
-		/* Use the pre-defined flavor for a Printable from an InputStream */
-		DocFlavor flavor = DocFlavor.SERVICE_FORMATTED.PRINTABLE;
-		StreamPrintServiceFactory[] factories;
-
-		factories = StreamPrintServiceFactory.
-			lookupStreamPrintServiceFactories(flavor, "application/postscript");
-		if (factories.length == 0) {
+		PrinterJob pj = PrinterJob.getPrinterJob();
+		StreamPrintServiceFactory[] spsf =
+			PrinterJob.lookupStreamPrintServices("application/postscript");
+		if (spsf.length == 0) {
 			// TODO: do something to indicate error...
 			return;
 		}
-
+		StreamPrintService ps = spsf[0].getPrintService(fos);
+		HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
+		attr.add(new Destination(new File("not.used").toURI()));
+		PageFormat pf = prtr.getPageFormat();
 		try {
-			/* Create a Stream printer for Postscript */
-			StreamPrintService sps;
-			sps = factories[0].getPrintService(fos);
-
-			/* Create and call a Print Job */
-			DocPrintJob pj = sps.createPrintJob();
-			Doc doc = new SimpleDoc(this, flavor, _prtr.getDocAttrs());
-			status = 0;
-			pj.print(doc, _prtr.getPrtAttrs());
-		} catch (PrintException pe) { 
-			pe.printStackTrace();
-			//System.err.println(pe);
+			pj.setPrintService(ps);
+			pj.setPrintable(this, pf);
+			pj.defaultPage(pf);
+			pj.print(attr);
+		} catch (Exception ee) {
+			ee.printStackTrace();
 		}
 	}
 

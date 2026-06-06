@@ -28,6 +28,12 @@ class Diablo630 extends Printer_Paper
 	static final int A_LF_CLEAR = (Printer_Paper.A_SHAD |
 					Printer_Paper.A_BOLD |
 					Printer_Paper.A_UNDL);
+
+	static final int ESC_H=0, ESC_I=1, ESC_J=2, ESC_K=3, ESC_Y=4, ESC_Z=5;
+	private String[] _sppr = new String[]{ "h", "i", "j", "k", "y", "z" };
+	private String[] _spcl = new String[]{
+			"\u00A7", "\u00A3", "\u00A8", "\u00E7", "\u00A2", "\u00AC" };
+
 	int _pages;
 	int _partial;
 	boolean gui = true;
@@ -406,6 +412,14 @@ class Diablo630 extends Printer_Paper
 		return l;
 	}
 
+	private void getSpclProp(Properties props, int x) {
+		String p = props.getProperty("diablo630_esc_" + _sppr[x]);
+		if (p != null) {
+			int u = Integer.decode(p);
+			_spcl[x] = Character.toString(u);
+		}
+	}
+
 	public Diablo630(Properties props, Vector<String> args, InputStream in) {
 		// args override props...
 		for (String arg : args) {
@@ -413,6 +427,8 @@ class Diablo630 extends Printer_Paper
 				String[] ss = arg.split("=");
 				props.setProperty("diablo630_" + ss[0],
 						ss[1].replaceAll(",", " "));
+			} else if (arg.equalsIgnoreCase("nogui")) {
+				props.setProperty("diablo630_nogui", "true");
 			}
 		}
 		int lpi = 6;
@@ -453,6 +469,12 @@ class Diablo630 extends Printer_Paper
 		if (p != null) {
 			pargs = p.split("\\s");
 		}
+		getSpclProp(props, ESC_H);
+		getSpclProp(props, ESC_I);
+		getSpclProp(props, ESC_J);
+		getSpclProp(props, ESC_K);
+		getSpclProp(props, ESC_Y);
+		getSpclProp(props, ESC_Z);
 		p = props.getProperty("diablo630_nogui");
 		if (p != null) {
 			// TODO: how to interpret values...
@@ -892,22 +914,22 @@ class Diablo630 extends Printer_Paper
 			break;
 		// Juki printer extensions
 		case 'H':
-			ret = "\u00A7";
+			ret = _spcl[ESC_H];
 			break;
 		case 'I':
-			ret = "\u00A3";
+			ret = _spcl[ESC_I];
 			break;
 		case 'J':
-			ret = "\u00A8";
+			ret = _spcl[ESC_J];
 			break;
 		case 'K':
-			ret = "\u00E7";
+			ret = _spcl[ESC_K];
 			break;
 		case 'Y':
-			ret = "\u00A2";
+			ret = _spcl[ESC_Y];
 			break;
 		case 'Z':
-			ret = "\u00AC";
+			ret = _spcl[ESC_Z];
 			break;
 		default:
 			//System.err.format("Unknown ESC %02x\n", b);

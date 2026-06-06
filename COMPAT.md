@@ -5,11 +5,13 @@ ESC sequences
 Sequence | Meaning | Supported
 ---------|---------|----------
 ESC BS | Micro BS | Yes
-ESC LF | Reverse LF | Yes
-ESC FF n | Set lines/page | Not Yet
-ESC VT n | Absolute Vert-tab to line | Yes
 ESC TAB n | Absolute tab to col | Yes
+ESC LF | Reverse LF | Yes
+ESC VT n | Absolute Vert-tab to line | Yes
+ESC FF n | Set lines/page | Not Yet
+ESC CR P | Reset | Yes
 ESC DC1 n | Character offset | Yes
+ESC SUB I | Reset | Yes
 ESC RS n | Set VSI | Yes
 ESC US n | Set HSI | Yes
 ESC 0 | Set Right Margin | Not Yet

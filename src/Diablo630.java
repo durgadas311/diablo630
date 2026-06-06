@@ -88,6 +88,7 @@ class Diablo630 extends Printer_Paper
 	private String[] queueJob = null;
 	private String saveJob = null;
 	private int jobId;
+	private String jobFile = null;
 
 	private PipedInputStream _pipe_i;
 	private PipedOutputStream _pipe_o;
@@ -117,6 +118,9 @@ class Diablo630 extends Printer_Paper
 		}
 		if (pat.indexOf("%d") >= 0) {
 			fn = fn.replaceAll("%d", datFmt.format(new Date()));
+		}
+		if (pat.indexOf("%f") >= 0) {
+			fn = fn.replaceAll("%f", jobFile);
 		}
 		// TODO: more substitutions
 		return fn;
@@ -189,6 +193,7 @@ class Diablo630 extends Printer_Paper
 			timer.stop();
 		}
 		//System.err.println("End of job");
+		boolean nothing = (_pages == 0 && _partial == 0);
 		// reset page count since file is now empty
 		_pages = 0;
 		_partial = 0;
@@ -204,24 +209,24 @@ class Diablo630 extends Printer_Paper
 		_append = false;
 		// Check for end-of-job actions...
 		// avoid corrupting SAVE file if aborting...
-		if (sts < 0 && blankPage()) {
+		if (sts < 0 && blankPage() && nothing) {
 			return;
 		}
 		if (action == Actions.DISCARD || action == Actions.NONE) {
 			return;
 		}
-		String jfn = _fosName;
+		jobFile = _fosName;
+		File dir = _file.getParentFile();
+		if (dir == null) {
+			dir = new File(System.getProperty("user.dir"));
+		}
 		if ((action == Actions.SAVE || action == Actions.SAVE_QUEUE) &&
 								_file != null) {
-			File dir = _file.getParentFile();
-			if (dir == null) {
-				dir = new File(System.getProperty("user.dir"));
-			}
 			String fn = doSubs(dir, saveJob);
 			File save = new File(dir, fn);
 			try {
 				_file.renameTo(save);
-				jfn = save.getAbsolutePath();;
+				jobFile = save.getAbsolutePath();;
 			} catch (Exception ee) {
 				System.err.format("Failed to rename job to %s\n",
 							save.getAbsolutePath());
@@ -229,10 +234,10 @@ class Diablo630 extends Printer_Paper
 			return;
 		}
 		if ((action == Actions.QUEUE || action == Actions.SAVE_QUEUE) &&
-								jfn != null) {
+								jobFile != null) {
 			String[] cmd = new String[queueJob.length];
 			for (int x = 0; x < queueJob.length; ++x) {
-				cmd[x] = queueJob[x].replaceAll("%f", jfn);
+				cmd[x] = doSubs(dir, queueJob[x]);
 			}
 			try {
 				Process p = Runtime.getRuntime().exec(cmd);

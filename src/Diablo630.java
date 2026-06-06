@@ -204,8 +204,7 @@ class Diablo630 extends Printer_Paper
 		_append = false;
 		// Check for end-of-job actions...
 		// avoid corrupting SAVE file if aborting...
-		if (sts < 0) {
-			// But would like to differentiate "failed with no output"
+		if (sts < 0 && blankPage()) {
 			return;
 		}
 		if (action == Actions.DISCARD || action == Actions.NONE) {
@@ -631,6 +630,8 @@ class Diablo630 extends Printer_Paper
 	}
 
 	public void endPage() {
+		// FF at start - ignore
+		if (_pages == 0 && _partial == 0) return;
 		_page_done = true;
 		++_pages;
 		_partial = 0;

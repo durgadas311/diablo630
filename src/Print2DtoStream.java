@@ -50,8 +50,10 @@ class Print2DtoStream implements Printable {
 
 	int lastPage;
 	int status;
+	int did;
 
 	public int getStatus() { return status; }
+	public int getCount() { return did; }
 	
 	public int print(Graphics g, PageFormat pf, int pageIndex) {
 		if (status == 0) {
@@ -60,7 +62,7 @@ class Print2DtoStream implements Printable {
 		}
 		if (lastPage != pageIndex) {
 			lastPage = pageIndex;
-			int did = 0;
+			did = 0;
 			while (status <= 10) {
 				int b;
 				b = _prtr.readPrinterStream();

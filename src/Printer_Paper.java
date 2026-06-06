@@ -77,6 +77,8 @@ class Printer_Paper
 	private int _xplots;
 	private int _last = -1;
 
+	public boolean blankPage() { return _plotArray == null; }
+
 	public void addPlot(String s, float x, float y, int attr) {
 		// _sorted = false; // can be smarter?
 		int n = _xplots;

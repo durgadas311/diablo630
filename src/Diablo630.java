@@ -83,7 +83,6 @@ class Diablo630 extends Printer_Paper
 	// These are all derived during init/setPaper, not changed after
 	private float _pw, _ph;	// adjusted for orientation
 	private float _ppw, _pph;	// _ppw is always short edge
-	private int _pwx, _phx;	// duplicate of Printer_Paper vars
 	private enum Actions { NONE, DISCARD, SAVE, QUEUE, SAVE_QUEUE };
 	private Actions action = Actions.NONE;
 	private String[] queueJob = null;
@@ -347,10 +346,16 @@ class Diablo630 extends Printer_Paper
 		float tm = _vsx * t;
 		// TODO: allow scaling...
 		// TODO: round values?
-		_pwx = (int)Math.floor(_hsx * _pw);
-		_phx = (int)Math.floor(_vsx * _ph);
-		setScale(_pwx, _phx);
-		super.setPage(_pwx, _phx, (int)lm, (int)tm);
+		float pw = _hsx * _pw;
+		float ph = _vsx * _ph;
+		if (_scale > 0f) {
+			pw /= _scale;
+			ph /= _scale;
+		}
+		int pwx = (int)Math.floor(pw);
+		int phx = (int)Math.floor(ph);
+		setScale(pwx, phx);
+		super.setPage(pwx, phx, (int)lm, (int)tm);
 	}
 
 	public void init(Graphics g) {
@@ -454,6 +459,16 @@ class Diablo630 extends Printer_Paper
 		if (p != null) {
 			_scale = Float.valueOf(p);
 		}
+		_lm = 0.0f;
+		_tm = 0.0f;
+		p = props.getProperty("diablo630_left");
+		if (p != null) {
+			_lm = Float.valueOf(p);
+		}
+		p = props.getProperty("diablo630_top");
+		if (p != null) {
+			_tm = Float.valueOf(p);
+		}
 		p = props.getProperty("diablo630_font");
 		if (p != null) {
 			fargs = p.split("\\s");
@@ -534,8 +549,6 @@ class Diablo630 extends Printer_Paper
 		_lpi = lpi;
 		_cpi = cpi;
 		// default to portrait 8.5x11, aligned upper-left corner (no margin)
-		_lm = 0.0f;
-		_tm = 0.0f;
 		_dir = true;
 
 		_vsi = 72 / _lpi; // re-computed later in init()
@@ -600,6 +613,7 @@ class Diablo630 extends Printer_Paper
 			_cons.setFont(_font);
 			_cons.setPitch(_cpi, _lpi);
 			_cons.setPaper(_ms, _or);
+			_cons.setScale(_scale);
 			_cons.setPosition(_lm, _tm);
 			_cons.setPages(_pages, _partial);
 			_cons.setStatus("Idle");
@@ -1112,18 +1126,20 @@ class Diablo630 extends Printer_Paper
 				// Paper settings dialog...
 				_pset.setMedia(_ms);
 				_pset.setOrient(_or);
+				_pset.setScale(_scale);
 				_pset.setLeft(_lm);
 				_pset.setTop(_tm);
 				boolean chg = _pset.doDialog(_cons.getFrame());
 				if (chg) {
 					_ms = _pset.getMedia();
 					_or = _pset.getOrient();
-					_bkg = _pset.getBkground();
+					_scale = _pset.getScale();
 					_lm = _pset.getLeft();
 					_tm = _pset.getTop();
 					_changed = true;
 					_cons.setChanges(true);
 					_cons.setPaper(_ms, _or);
+					_cons.setScale(_scale);
 					_cons.setPosition(_lm, _tm);
 					inject(0xff);
 				}

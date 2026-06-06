@@ -18,6 +18,7 @@ class PrinterConsole
 	private JLabel _pitch_txt;
 	private JLabel _file_txt;
 	private JLabel _paper_txt;
+	private JLabel _sc_txt;
 	private JLabel _off_txt;
 	private JLabel _pages_txt;
 	private JLabel _status_txt;
@@ -71,6 +72,11 @@ class PrinterConsole
 
 	public void setPaper(MediaSizeName ms, OrientationRequested or) {
 		_paper_txt.setText("Paper: " + ms.toString() + "/" + or.toString());
+	}
+
+	public void setScale(float sc) {
+		if (sc <= 0f) sc = 1f;
+		_sc_txt.setText("Scaling: " + sc);
 	}
 
 	public void setPosition(float lm, float tm) {
@@ -134,6 +140,12 @@ class PrinterConsole
 		_paper_txt.setPreferredSize(new Dimension(600, 20));
 		gridbag.setConstraints(_paper_txt, s);
 		_frame.add(_paper_txt);
+		s.gridy += 1;
+
+		_sc_txt = new JLabel("Scaling:");
+		_sc_txt.setPreferredSize(new Dimension(600, 20));
+		gridbag.setConstraints(_sc_txt, s);
+		_frame.add(_sc_txt);
 		s.gridy += 1;
 
 		_off_txt = new JLabel("Offsets:");

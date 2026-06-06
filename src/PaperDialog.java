@@ -15,7 +15,8 @@ class PaperDialog
 	private JComboBox<OrientationRequested> _or_cb;
 	private JTextField _lm_txt;
 	private JTextField _tm_txt;
-	private float _lm, _tm;
+	private JTextField _sc_txt;
+	private float _lm, _tm, _sc;
 	MediaSizeName _ms;
 	static private M11x14 _m11x14;
 	static private F11x14 _f11x14;
@@ -66,6 +67,22 @@ class PaperDialog
 
 	public PaperPaintable getBkground() {
 		return null;
+	}
+
+	// Normalize 1.0 as 0.0 (no scaling)
+	public void setScale(float sc) {
+		_sc = sc;
+		if (sc <= 0f) _sc = 1.0f;
+		_sc_txt.setText(Float.toString(sc));
+	}
+
+	public float getScale() {
+		float sc = -1.0f;
+		try {
+			sc = Float.parseFloat(_sc_txt.getText());
+		} catch (Exception e) {}
+		if (sc < 0f || sc == 1f) sc = 0f;
+		return sc;
 	}
 
 	public void setLeft(float lm) {
@@ -181,6 +198,15 @@ class PaperDialog
 		_or_cb = new JComboBox<OrientationRequested>(ors);
 		gridbag.setConstraints(_or_cb, s);
 		_dia_pn.add(_or_cb);
+		s.gridy += 1;
+
+		_sc_txt = new JTextField();
+		_sc_txt.setPreferredSize(new Dimension(50, 20));
+		pn = new JPanel();
+		pn.add(new JLabel("Scaling:"));
+		pn.add(_sc_txt);
+		gridbag.setConstraints(pn, s);
+		_dia_pn.add(pn);
 		s.gridy += 1;
 
 		_lm_txt = new JTextField();

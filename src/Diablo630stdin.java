@@ -1,6 +1,7 @@
 // Copyright (c) 2016 Douglas Miller
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Vector;
 import java.util.Properties;
 import java.awt.*;
@@ -9,21 +10,17 @@ import java.io.*;
 public class Diablo630stdin {
 	private static Diablo630 front_end;
 
+	List<String> boolArgs = Arrays.asList();
+	String[] seqArgs = new String[0];
+
 	public static void main(String[] args) {
 		new Diablo630stdin()._main(args);
 	}
 	public void _main(String[] args) {
 		// TODO: make font (cpi/lpi) configurable
 		Properties props = new Properties();
-		File conf = new File("diablo630.rc");
-		if (!conf.exists()) {
-			conf = new File(System.getProperty("user.home"), ".diablo630rc");
-		}
-		for (String arg : args) {
-			if (arg.startsWith("conf=")) {
-				conf = new File(arg.substring(5));
-			}
-		}
+		String rc = Diablo630.getConfig(args);
+		File conf = new File(rc);
 		try {
 			InputStream is = new FileInputStream(conf);
 			props.load(is);
@@ -31,22 +28,12 @@ public class Diablo630stdin {
 			//ee.printStackTrace();
 			System.err.format("No config file \"%s\"\n", conf);
 		}
+		Diablo630.processArgs(props, args, boolArgs, seqArgs);
 
-		Vector<String> argv = new Vector<String>(Arrays.asList(args));
-		// These are the defaults already...
-		//argv.add("cpi=10");
-		//argv.add("lpi=6");
-		//argv.add("font=Monospaced,PLAIN,12");
-		front_end = new Diablo630(props, argv, System.in);
+		front_end = new Diablo630(props, System.in);
 		String file = props.getProperty("diablo630_file");
 		if (file == null) {
 			file = "out.ps";
-		}
-		for (String arg : args) {
-			if (arg.startsWith("file=")) {
-				file = arg.substring(5);
-				break;
-			}
 		}
 		front_end.runPrinter(file);
 		// If this returns, we are really done...

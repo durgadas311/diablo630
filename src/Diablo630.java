@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Vector;
 import java.util.Date;
 import java.text.SimpleDateFormat;
@@ -429,17 +430,42 @@ class Diablo630 extends Printer_Paper
 		}
 	}
 
-	public Diablo630(Properties props, Vector<String> args, InputStream in) {
-		// args override props...
+	public static String getConfig(String[] args) {
 		for (String arg : args) {
-			if (arg.indexOf("=") > 0) {
-				String[] ss = arg.split("=");
-				props.setProperty("diablo630_" + ss[0],
-						ss[1].replaceAll(",", " "));
-			} else if (arg.equalsIgnoreCase("nogui")) {
-				props.setProperty("diablo630_nogui", "true");
+			if (arg.startsWith("conf=")) {
+				return arg.substring(5);
 			}
 		}
+		String rc = System.getenv("DIABLO630_CONFIG");
+		if (rc == null) {
+			File f = new File("./diablo630.rc");
+			if (f.exists()) {
+				rc = f.getAbsolutePath();
+			}
+		}
+		if (rc == null) {
+			rc = System.getProperty("user.home") + "/.diablo630rc";
+		}
+		return rc;
+	}
+
+	static List<String> bools = Arrays.asList("nogui");
+	public static void processArgs(Properties props, String[] args,
+				List<String> _bools, String[] seq) {
+		int x = 0;
+		for (String arg : args) {
+			if (arg.indexOf("=") > 0) {
+				String[] ss = arg.split("=", 2);
+				props.setProperty("diablo630_" + ss[0], ss[1]);
+			} else if (bools.contains(arg) || _bools.contains(arg)) {
+				props.setProperty("diablo630_" + arg, "true");
+			} else if (x < seq.length) {
+				props.setProperty("diablo630_" + seq[x++], arg);
+			}
+		}
+	}
+
+	public Diablo630(Properties props, InputStream in) {
 		int lpi = 6;
 		int cpi = 10;
 		Font font = new Font("Monospaced", Font.PLAIN, 12);

@@ -1,6 +1,7 @@
 // Copyright (c) 2016 Douglas Miller
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Vector;
 import java.util.Properties;
 import java.awt.*;
@@ -14,6 +15,9 @@ import com.fazecast.jSerialComm.*;
 public class Diablo630tty {
 	private static Diablo630 front_end;
 
+	List<String> boolArgs = Arrays.asList();
+	String[] seqArgs = new String[]{ "tty", "baud" };
+
 	public static void main(String[] args) {
 		new Diablo630tty()._main(args);
 	}
@@ -25,15 +29,8 @@ public class Diablo630tty {
 		SerialPort comm;
 
 		// TODO: allow for redirect of output to log file.
-		File conf = new File("diablo630.rc");
-		if (!conf.exists()) {
-			conf = new File(System.getProperty("user.home"), ".diablo630rc");
-		}
-		for (String arg : args) {
-			if (arg.startsWith("conf=")) {
-				conf = new File(arg.substring(5));
-			}
-		}
+		String rc = Diablo630.getConfig(args);
+		File conf = new File(rc);
 		try {
 			InputStream is = new FileInputStream(conf);
 			props.load(is);
@@ -41,6 +38,8 @@ public class Diablo630tty {
 			//ee.printStackTrace();
 			System.err.format("No config file \"%s\"\n", conf);
 		}
+		Diablo630.processArgs(props, args, boolArgs, seqArgs);
+		// everything recognized is in properties now.
 		String s = props.getProperty("diablo630_tty");
 		if (s != null) {
 			tty = s;
@@ -48,26 +47,16 @@ public class Diablo630tty {
 		s = props.getProperty("diablo630_baud");
 		if (s != null) {
 			baud = Integer.decode(s);
+		} else {
+			baud = 9600;	// some default
 		}
 		String file = props.getProperty("diablo630_file");
 		if (s == null) {
 			file = "out.ps";
 		}
-		for (String arg : args) {
-			if (arg.startsWith("tty=")) {
-				tty = arg.substring(5);
-			} else if (arg.startsWith("baud=")) {
-				baud = Integer.decode(arg.substring(5));
-			} else if (arg.startsWith("file=")) {
-				file = arg.substring(5);
-			}
-		}
 		if (tty == null) {
 			System.err.format("Usage: Diablo630tty [conf=file] tty=dev baud=num\n");
 			System.exit(1);
-		}
-		if (baud <= 0) {
-			baud = 9600;	// some default
 		}
 		comm = getPort(tty, baud);
 		if (comm == null) {
@@ -82,8 +71,7 @@ public class Diablo630tty {
 		}
 		comm.setDTR();  
 		comm.setRTS();
-		Vector<String> argv = new Vector<String>(Arrays.asList(args));
-		front_end = new Diablo630(props, argv, fin);
+		front_end = new Diablo630(props, fin);
 		front_end.runPrinter(file);
 		// If this returns, we are really done...
 		System.exit(0);

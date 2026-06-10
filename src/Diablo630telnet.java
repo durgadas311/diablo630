@@ -1,6 +1,7 @@
 // Copyright (c) 2016 Douglas Miller
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Vector;
 import java.util.Properties;
 import java.awt.*;
@@ -11,6 +12,9 @@ public class Diablo630telnet {
 	private static Diablo630 front_end;
 	private static Socket sok;
 
+	List<String> boolArgs = Arrays.asList();
+	String[] seqArgs = new String[]{ "host", "port" };
+
 	public static void main(String[] args) {
 		new Diablo630telnet()._main(args);
 	}
@@ -20,15 +24,8 @@ public class Diablo630telnet {
 		int port = -1;
 		InputStream fin = null;
 		// TODO: allow for redirect of output to log file.
-		File conf = new File("diablo630.rc");
-		if (!conf.exists()) {
-			conf = new File(System.getProperty("user.home"), ".diablo630rc");
-		}
-		for (String arg : args) {
-			if (arg.startsWith("conf=")) {
-				conf = new File(arg.substring(5));
-			}
-		}
+		String rc = Diablo630.getConfig(args);
+		File conf = new File(rc);
 		try {
 			InputStream is = new FileInputStream(conf);
 			props.load(is);
@@ -36,6 +33,8 @@ public class Diablo630telnet {
 			//ee.printStackTrace();
 			System.err.format("No config file \"%s\"\n", conf);
 		}
+		Diablo630.processArgs(props, args, boolArgs, seqArgs);
+		// everything recognized is in properties now.
 		String s = props.getProperty("diablo630_host");
 		if (s != null) {
 			host = s;
@@ -47,15 +46,6 @@ public class Diablo630telnet {
 		String file = props.getProperty("diablo630_file");
 		if (file == null) {
 			file = "out.ps";
-		}
-		for (String arg : args) {
-			if (arg.startsWith("host=")) {
-				host = arg.substring(5);
-			} else if (arg.startsWith("port=")) {
-				port = Integer.decode(arg.substring(5));
-			} else if (arg.startsWith("file=")) {
-				file = arg.substring(5);
-			}
 		}
 		if (host == null) {
 			System.err.format("Usage: Diablo630telnet [conf=file] host=addr [port=num]\n");
@@ -72,8 +62,7 @@ public class Diablo630telnet {
 			ee.printStackTrace();
 			System.exit(1);
 		}
-		Vector<String> argv = new Vector<String>(Arrays.asList(args));
-		front_end = new Diablo630(props, argv, fin);
+		front_end = new Diablo630(props, fin);
 		front_end.runPrinter(file);
 		// If this returns, we are really done...
 		System.exit(0);

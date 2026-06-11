@@ -43,9 +43,10 @@ class Diablo630 extends Printer_Paper
 	PrinterConsole _cons;
 	private javax.swing.Timer timer;
 	private File _file;
-	private FileOutputStream _fos;
+	private String _outName;
+	private OutputStream _fos;
+	private File _fosFile;
 	private String _fosName;
-	private boolean _append;
 	private Font _font;
 	private PaperDialog _pset;
 	private FontDialog _fset;
@@ -89,12 +90,30 @@ class Diablo630 extends Printer_Paper
 	private String[] queueJob = null;
 	private String saveJob = null;
 	private int jobId;
-	private String jobFile = null;
+	private File jobFile = null;
+	private Date jobDate;
 
 	private PipedInputStream _pipe_i;
 	private PipedOutputStream _pipe_o;
 
 	public PageFormat getPageFormat() { return _pf; }
+
+	private File trueDir(File f) {
+		File d = f.getParentFile();
+		if (d == null) {
+			d = new File(System.getProperty("user.dir"));
+		}
+		return d;
+	}
+
+	private String trimSuffix(File f) {
+		String b = f.getName();
+		int x = b.lastIndexOf(".");
+		if (x > 0) {
+			b = b.substring(0, x);
+		}
+		return new File(trueDir(f), b).getAbsolutePath();
+	}
 
 	private String doSubs(File dir, String pat) {
 		String fn = pat;
@@ -106,22 +125,25 @@ class Diablo630 extends Printer_Paper
 				return tf.getName();
 			} catch (Exception ee) { }
 			// punt...
-			fn = fn.replaceAll("%x", tagFmt.format(new Date()));
+			fn = fn.replaceAll("%x", tagFmt.format(jobDate));
 		}
 		if (pat.indexOf("%j") >= 0) {
 			fn = fn.replaceAll("%j", String.format("%d", jobId));
 		}
 		if (pat.indexOf("%s") >= 0) {
-			fn = fn.replaceAll("%s", tagFmt.format(new Date()));
+			fn = fn.replaceAll("%s", tagFmt.format(jobDate));
 		}
 		if (pat.indexOf("%t") >= 0) {
-			fn = fn.replaceAll("%t", todFmt.format(new Date()));
+			fn = fn.replaceAll("%t", todFmt.format(jobDate));
 		}
 		if (pat.indexOf("%d") >= 0) {
-			fn = fn.replaceAll("%d", datFmt.format(new Date()));
+			fn = fn.replaceAll("%d", datFmt.format(jobDate));
 		}
 		if (pat.indexOf("%f") >= 0) {
-			fn = fn.replaceAll("%f", jobFile);
+			fn = fn.replaceAll("%f", jobFile.getAbsolutePath());
+		}
+		if (pat.indexOf("%b") >= 0) {
+			fn = fn.replaceAll("%b", trimSuffix(jobFile));
 		}
 		// TODO: more substitutions
 		return fn;
@@ -207,27 +229,37 @@ class Diablo630 extends Printer_Paper
 		} catch (Exception ee) {}
 		_fos = null;
 		clearPage();
-		_append = false;
+		jobDate = new Date();
 		// Check for end-of-job actions...
 		// avoid corrupting SAVE file if aborting...
 		if (sts < 0 && blankPage() && nothing) {
 			return;
 		}
+		File dir = trueDir(_file);
+		// rename temp file _fos to user's preferred name.
+		jobFile = _fosName != null ? _fosFile : null;
+		if (jobFile != null) try {
+			// rename temp file to user's preferred name, with subs.
+			String nn = doSubs(dir, _file.getName());
+			File ff = new File(dir, nn);
+			jobFile.renameTo(ff);
+			jobFile = ff;
+		} catch (Exception ee) {
+			System.err.format("Failed to rename tmp to %s\n",
+							_file.getAbsolutePath());
+			// forge ahead and see if file can be used
+		}
+		// at this point, '_file' contains the output
 		if (action == Actions.DISCARD || action == Actions.NONE) {
 			return;
 		}
-		jobFile = _fosName;
-		File dir = _file.getParentFile();
-		if (dir == null) {
-			dir = new File(System.getProperty("user.dir"));
-		}
 		if ((action == Actions.SAVE || action == Actions.SAVE_QUEUE) &&
-								_file != null) {
+								jobFile != null) {
 			String fn = doSubs(dir, saveJob);
 			File save = new File(dir, fn);
 			try {
 				_file.renameTo(save);
-				jobFile = save.getAbsolutePath();;
+				jobFile = save;
 			} catch (Exception ee) {
 				System.err.format("Failed to rename job to %s\n",
 							save.getAbsolutePath());
@@ -256,21 +288,23 @@ class Diablo630 extends Printer_Paper
 
 	// Called at the top of the run() loop, this is our chance
 	// to make major changes in the print environment.
+	//
+	// on entry, '_file' is the File object of the final output.
+	// on return, '_fos' is open and ready for writing.
+	//		_fosName is the path for '_fos'.
+	//
 	private void setNewFile() {
 		try {
-			_fos = new FileOutputStream(_file, _append);
-			_fosName = _file.getAbsolutePath();
+			_fos = new FileOutputStream(_fosFile, false);
+			_fosName = _fosFile.getAbsolutePath();
 		} catch (Exception ee) {
 			_fosName = null;
 			_file = null;
 			if (_cons != null) {
 				_cons.setFileName(_file);
 			}
-			try {
-				_fos = new FileOutputStream("/dev/null");
-			} catch (Exception eee) {}
+			_fos = OutputStream.nullOutputStream();
 		}
-		_append = true;
 		if (_changed) {
 			_changed = false;
 			setupPaper(_ms, _or);
@@ -501,7 +535,7 @@ class Diablo630 extends Printer_Paper
 		}
 		p = props.getProperty("diablo630_font");
 		if (p != null) {
-			fargs = p.split("\\s");
+			fargs = p.split("[,\\s]");
 			// TODO: check validity?
 			if (fargs.length != 3) {
 			}
@@ -512,7 +546,7 @@ class Diablo630 extends Printer_Paper
 		}
 		p = props.getProperty("diablo630_paper");
 		if (p != null) {
-			pargs = p.split("\\s");
+			pargs = p.split("[,\\s]");
 		}
 		getSpclProp(props, ESC_H);
 		getSpclProp(props, ESC_I);
@@ -594,7 +628,6 @@ class Diablo630 extends Printer_Paper
 		_changed = true;
 		_font_chg = true;
 		_init = false;
-		_append = false; // only 'true' for multiple jobs, same file
 		_cons = null;
 		// We need this for paper management...
 		_pset = new PaperDialog();
@@ -1136,7 +1169,6 @@ class Diablo630 extends Printer_Paper
 			if (m.getMnemonic() == KeyEvent.VK_F) {
 				boolean chg = getFile();
 				if (chg) {
-					_append = false;
 					_changed = true;
 					_cons.setChanges(true);
 					_cons.setFileName(_file);
@@ -1148,7 +1180,6 @@ class Diablo630 extends Printer_Paper
 				// can't close _fos or else printjob will throw exception...
 				// So tell printjob that file changed, and unset _append
 				// to cause a truncate.
-				_append = false;
 				_changed = true;
 				_cons.setChanges(true);
 				inject(0xff);
@@ -1266,9 +1297,16 @@ class Diablo630 extends Printer_Paper
 
 	public void runPrinter(String file) {
 		int status = 0;
-		_file = new File(file);
+		_outName = file;
+		_file = new File(_outName);
 		if (_cons != null) {
 			_cons.setFileName(_file);
+		}
+		try {
+			_fosFile = File.createTempFile(".out", ".ps", trueDir(_file));
+		} catch (Exception ee) {
+			// can't imagine why this would fail, so just punt.
+			_fosFile = new File(trueDir(_file), ".out.ps");
 		}
 		do {
 			setNewFile();	// opens _fos

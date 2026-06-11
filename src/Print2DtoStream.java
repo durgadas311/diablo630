@@ -24,7 +24,7 @@ import javax.print.attribute.standard.*;
 class Print2DtoStream implements Printable {
 	Diablo630 _prtr;
 
-	public Print2DtoStream(FileOutputStream fos, Diablo630 prtr) {
+	public Print2DtoStream(OutputStream fos, Diablo630 prtr) {
 		_prtr = prtr;
 		lastPage = -1;
 		PrinterJob pj = PrinterJob.getPrinterJob();

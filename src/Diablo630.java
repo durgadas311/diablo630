@@ -222,6 +222,7 @@ class Diablo630 extends Printer_Paper
 		_partial = 0;
 		if (_cons != null) {
 			_cons.setPages(_pages, _partial);
+			_cons.newPage();
 			_cons.setStatus("Done");
 		}
 		try {
@@ -311,6 +312,7 @@ class Diablo630 extends Printer_Paper
 			_pages = _partial = 0;
 			if (_cons != null) {
 				_cons.setPages(_pages, _partial);
+				_cons.newPage();
 				_cons.setStatus("Idle");
 			}
 			_init = false;	// causes re-init
@@ -319,15 +321,15 @@ class Diablo630 extends Printer_Paper
 
 	private void setCarriage(float x) {
 		// TODO: force sane value here instead of by callers?
-		if (_cons != null) {
-			_cons.setCarriage(x, _pwx);
-		}
 		_x = x;
 	}
 
 	private void setProgress(float y) {
+	}
+
+	private void showPrint(float x, float y, int len) {
 		if (_cons != null) {
-			_cons.setProgress(y, _phx);
+			_cons.setPrint((int)x, (int)y, len);
 		}
 	}
 
@@ -408,6 +410,9 @@ class Diablo630 extends Printer_Paper
 		int pwx = (int)Math.floor(pw);
 		int phx = (int)Math.floor(ph);
 		setScale(pwx, phx);
+		if (_cons != null) {
+			_cons.setPage(pwx, phx);
+		}
 		super.setPage(pwx, phx, (int)lm, (int)tm);
 	}
 
@@ -715,6 +720,7 @@ class Diablo630 extends Printer_Paper
 		_partial = 0;
 		if (_cons != null) {
 			_cons.setPages(_pages, _partial);
+			_cons.newPage();
 		}
 		_y = 0;
 	}
@@ -832,6 +838,7 @@ class Diablo630 extends Printer_Paper
 		_cntr = false;
 		float len = (float)_cline.length() * _fw;
 		float x = (_pwx - len) / 2f;
+		showPrint(x, _y, _cline.length());
 		super.addPlot(_cline, x, _y, 0);
 		_cline = "";
 	}
@@ -1037,6 +1044,7 @@ class Diablo630 extends Printer_Paper
 	}
 
 	private void prtChar(String s) {
+		showPrint(_x, _y, s.length());
 		if (_adjacent) {
 			if (_dir) {
 				super.appendLastPlot(s, _x, _y, _attr);

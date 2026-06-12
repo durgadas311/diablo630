@@ -9,8 +9,7 @@ CORE_CLASSES =	\
 		PaperDialog.class \
 		FontDialog.class \
 		PrinterConsole.class \
-		PrinterCarriage.class \
-		PrinterProgress.class \
+		PageProgress.class \
 		PaperPaintable.class
 
 D630_CLASSES =	\

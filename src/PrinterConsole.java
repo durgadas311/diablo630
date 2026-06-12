@@ -22,8 +22,7 @@ class PrinterConsole
 	private JLabel _off_txt;
 	private JLabel _pages_txt;
 	private JLabel _status_txt;
-	private PrinterCarriage _carr;
-	private PrinterProgress _prog;
+	private PageProgress _page;
 
 	public JFrame getFrame() { return _frame; }
 
@@ -93,20 +92,30 @@ class PrinterConsole
 		}
 	}
 
-	public void setCarriage(float x, int pw) {
-		_carr.setCarriage(x, pw);
-	}
-
-	public void setProgress(float y, int ph) {
-		_prog.setProgress(y, ph);
-	}
-
 	public void setPages(int pgs, int part) {
 		_pages_txt.setText("Pages Printed: " + pgs + "." + part);
 	}
 
 	public void setStatus(String sts) {
 		_status_txt.setText("Printer: " + sts);
+	}
+
+	public void setPage(int pw, int ph) {
+		if (_page != null) {
+			_page.setPage(pw, ph);
+		}
+	}
+
+	public void newPage() {
+		if (_page != null) {
+			_page.newPage();
+		}
+	}
+
+	public void setPrint(int x, int y, int len) {
+		if (_page != null) {
+			_page.setPrint(x, y, len);
+		}
 	}
 
 	public PrinterConsole(String descr) {
@@ -128,43 +137,54 @@ class PrinterConsole
 		s.insets.right = 2;
 		s.anchor = GridBagConstraints.WEST;
 
-		_carr = new PrinterCarriage();
-		JLabel plab = new JLabel("Platen:");
-		plab.setPreferredSize(new Dimension(60, 20));
-		_prog = new PrinterProgress();
-		JLabel rlab = new JLabel("Page:");
-		rlab.setPreferredSize(new Dimension(60, 20));
+		_page = new PageProgress();
 
-		s.gridwidth = 3;
 		_chg_txt = new JLabel(" ");
-		_chg_txt.setPreferredSize(new Dimension(600, 20));
+		_chg_txt.setPreferredSize(new Dimension(300, 20));
 		gridbag.setConstraints(_chg_txt, s);
 		_frame.add(_chg_txt);
 		s.gridy += 1;
 
 		_font_txt = new JLabel("Font:");
-		_font_txt.setPreferredSize(new Dimension(600, 20));
+		_font_txt.setPreferredSize(new Dimension(300, 20));
 		gridbag.setConstraints(_font_txt, s);
 		_frame.add(_font_txt);
 		s.gridy += 1;
 
 		_paper_txt = new JLabel("Paper:");
-		_paper_txt.setPreferredSize(new Dimension(600, 20));
+		_paper_txt.setPreferredSize(new Dimension(300, 20));
 		gridbag.setConstraints(_paper_txt, s);
 		_frame.add(_paper_txt);
 		s.gridy += 1;
 
 		_pitch_txt = new JLabel("Pitch:");
-		_pitch_txt.setPreferredSize(new Dimension(600, 20));
+		_pitch_txt.setPreferredSize(new Dimension(300, 20));
 		gridbag.setConstraints(_pitch_txt, s);
 		_frame.add(_pitch_txt);
 		s.gridy += 1;
 
 		_sc_txt = new JLabel("Scaling:");
-		_sc_txt.setPreferredSize(new Dimension(600, 20));
+		_sc_txt.setPreferredSize(new Dimension(300, 20));
 		gridbag.setConstraints(_sc_txt, s);
 		_frame.add(_sc_txt);
 		s.gridy += 1;
+
+		int saveY = s.gridy;
+		s.gridheight = s.gridy;
+		s.gridy = 0;
+		++s.gridx;
+		gridbag.setConstraints(_page, s);
+		_frame.add(_page);
+		++s.gridx;
+		JPanel pan = new JPanel();
+		pan.setPreferredSize(new Dimension(10, 10));
+		gridbag.setConstraints(pan, s);
+		_frame.add(pan);
+		--s.gridx;
+		--s.gridx;
+		s.gridheight = 1;
+		s.gridy = saveY;
+		s.gridwidth = 3;
 
 		_off_txt = new JLabel("Offsets:");
 		_off_txt.setPreferredSize(new Dimension(600, 20));
@@ -178,39 +198,16 @@ class PrinterConsole
 		_frame.add(_file_txt);
 		s.gridy += 1;
 
-		s.gridwidth = 1;
 		_pages_txt = new JLabel("Pages Printed:");
-		_pages_txt.setPreferredSize(new Dimension(200, 20));
+		_pages_txt.setPreferredSize(new Dimension(600, 20));
 		gridbag.setConstraints(_pages_txt, s);
 		_frame.add(_pages_txt);
-		++s.gridx;
-		s.anchor = GridBagConstraints.EAST;
-		gridbag.setConstraints(rlab, s);
-		_frame.add(rlab);
-		++s.gridx;
-		s.anchor = GridBagConstraints.WEST;
-		gridbag.setConstraints(_prog, s);
-		_frame.add(_prog);
-		--s.gridx;
-		--s.gridx;
 		s.gridy += 1;
 
 		_status_txt = new JLabel("Printer:");
-		_status_txt.setPreferredSize(new Dimension(200, 20));
+		_status_txt.setPreferredSize(new Dimension(600, 20));
 		gridbag.setConstraints(_status_txt, s);
 		_frame.add(_status_txt);
-		++s.gridx;
-		s.anchor = GridBagConstraints.EAST;
-		gridbag.setConstraints(plab, s);
-		_frame.add(plab);
-		++s.gridx;
-		s.anchor = GridBagConstraints.WEST;
-		gridbag.setConstraints(_carr, s);
-		_frame.add(_carr);
-		--s.gridx;
-		--s.gridx;
-		s.gridy += 1;
-		s.gridwidth = 3;
 
 		_mb = new JMenuBar();
 

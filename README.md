@@ -22,3 +22,6 @@ An [example of output](examples/ws-print.pdf)
 from WordStar printing PRINT.TST from distribution disk.
 Note: first and last pages are intentionally blank, due to
 WordStar using extra Form Feed characters.
+
+A short screencast of the app printing:
+[screencast](imgs/diablo630.webm)

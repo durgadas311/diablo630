@@ -24,4 +24,4 @@ Note: first and last pages are intentionally blank, due to
 WordStar using extra Form Feed characters.
 
 A short screencast of the app printing:
-[screencast](imgs/diablo630.webm)
+[Screencast from 2026-06-12 15-37-12.webm](https://github.com/user-attachments/assets/08b4518e-0995-4835-ab8c-9c58071447a7)

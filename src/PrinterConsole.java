@@ -140,31 +140,31 @@ class PrinterConsole
 		_page = new PageProgress();
 
 		_chg_txt = new JLabel(" ");
-		_chg_txt.setPreferredSize(new Dimension(300, 20));
+		_chg_txt.setPreferredSize(new Dimension(450, 20));
 		gridbag.setConstraints(_chg_txt, s);
 		_frame.add(_chg_txt);
 		s.gridy += 1;
 
 		_font_txt = new JLabel("Font:");
-		_font_txt.setPreferredSize(new Dimension(300, 20));
+		_font_txt.setPreferredSize(new Dimension(450, 20));
 		gridbag.setConstraints(_font_txt, s);
 		_frame.add(_font_txt);
 		s.gridy += 1;
 
 		_paper_txt = new JLabel("Paper:");
-		_paper_txt.setPreferredSize(new Dimension(300, 20));
+		_paper_txt.setPreferredSize(new Dimension(450, 20));
 		gridbag.setConstraints(_paper_txt, s);
 		_frame.add(_paper_txt);
 		s.gridy += 1;
 
 		_pitch_txt = new JLabel("Pitch:");
-		_pitch_txt.setPreferredSize(new Dimension(300, 20));
+		_pitch_txt.setPreferredSize(new Dimension(450, 20));
 		gridbag.setConstraints(_pitch_txt, s);
 		_frame.add(_pitch_txt);
 		s.gridy += 1;
 
 		_sc_txt = new JLabel("Scaling:");
-		_sc_txt.setPreferredSize(new Dimension(300, 20));
+		_sc_txt.setPreferredSize(new Dimension(450, 20));
 		gridbag.setConstraints(_sc_txt, s);
 		_frame.add(_sc_txt);
 		s.gridy += 1;

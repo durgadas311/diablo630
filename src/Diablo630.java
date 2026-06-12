@@ -317,6 +317,20 @@ class Diablo630 extends Printer_Paper
 		}
 	}
 
+	private void setCarriage(float x) {
+		// TODO: force sane value here instead of by callers?
+		if (_cons != null) {
+			_cons.setCarriage(x, _pwx);
+		}
+		_x = x;
+	}
+
+	private void setProgress(float y) {
+		if (_cons != null) {
+			_cons.setProgress(y, _phx);
+		}
+	}
+
 	public void reset() {
 		_attr = 0;
 		_dir = true;
@@ -330,7 +344,7 @@ class Diablo630 extends Printer_Paper
 		// _cpi, _lpi, _lm, _tm are set by config or menu - leave alone
 		_hsi = 72.0f / _cpi;
 		_vsi = 72.0f / _lpi;
-		_x = 0;
+		setCarriage(0);
 		_page_done = true; // start over (clearPage()) on next char
 		// TODO: avoid extra blank page
 	}
@@ -743,24 +757,28 @@ class Diablo630 extends Printer_Paper
 	}
 
 	private void space() {
-		_x += _hsi + _off;
-		if (_x >= _pwx) _x = _pwx - 1;
+		float x = _x + _hsi + _off;
+		if (x >= _pwx) x = _pwx - 1;
+		setCarriage(x);
 	}
 
 	private void bk1tic() {
-		_x -= 0.6f; // 1/120 == 0.6 pt
-		if (_x < 0) _x = 0;
+		float x = _x - 0.6f; // 1/120 == 0.6 pt
+		if (x < 0) x = 0;
+		setCarriage(x);
 	}
 
 	private void bkspace() {
-		_x -= _hsi + _off;
-		if (_x < 0) _x = 0;
+		float x = _x - _hsi + _off;
+		if (x < 0) x = 0;
+		setCarriage(x);
 	}
 
 	private void forward() {
 		if (_grph) {
-			_x += 1.2f;	// pts, 1/60" (2/120")
-			if (_x >= _pwx) _x = _pwx - 1;
+			float x = _x + 1.2f;	// pts, 1/60" (2/120")
+			if (x >= _pwx) x = _pwx - 1;
+			setCarriage(x);
 		} else if (_dir) {
 			space();
 		} else {
@@ -775,8 +793,9 @@ class Diablo630 extends Printer_Paper
 
 	private void backward() {
 		if (_grph) {
-			_x -= 1.2f;	// pts, 1/60" (2/120")
-			if (_x < 0) _x = 0;
+			float x = _x - 1.2f; // pts, 1/60" (2/120")
+			if (x < 0) x = 0;
+			setCarriage(x);
 		} else if (_dir) {
 			bkspace();
 		} else {
@@ -789,7 +808,7 @@ class Diablo630 extends Printer_Paper
 		int x = (int)Math.floor(_x / _fw);
 		x &= ~7;
 		x += 8;
-		_x = x * _fw;
+		setCarriage(x * _fw);
 	}
 
 	private void gotoCol(int col) {
@@ -797,7 +816,7 @@ class Diablo630 extends Printer_Paper
 		if (x >= _pwx) {
 			return;
 		}
-		_x = x;
+		setCarriage(x);
 	}
 
 	private void gotoLine(int line) {
@@ -1074,7 +1093,7 @@ class Diablo630 extends Printer_Paper
 				if (_cntr) {
 					doCenter();
 				}
-				_x = 0;
+				setCarriage(0);
 				break;
 			case '\n':
 				// TODO: finish any attrs
@@ -1121,6 +1140,7 @@ class Diablo630 extends Printer_Paper
 			s += (char)b;
 		}
 		// Assumes progress is always down the page...
+		setProgress(_y);
 		int p = (int)Math.ceil((_y / _phx) * 10);
 		if (p > 9) {
 			p = 9;

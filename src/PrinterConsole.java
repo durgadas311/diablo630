@@ -22,6 +22,8 @@ class PrinterConsole
 	private JLabel _off_txt;
 	private JLabel _pages_txt;
 	private JLabel _status_txt;
+	private PrinterCarriage _carr;
+	private PrinterProgress _prog;
 
 	public JFrame getFrame() { return _frame; }
 
@@ -91,6 +93,14 @@ class PrinterConsole
 		}
 	}
 
+	public void setCarriage(float x, int pw) {
+		_carr.setCarriage(x, pw);
+	}
+
+	public void setProgress(float y, int ph) {
+		_prog.setProgress(y, ph);
+	}
+
 	public void setPages(int pgs, int part) {
 		_pages_txt.setText("Pages Printed: " + pgs + "." + part);
 	}
@@ -106,8 +116,8 @@ class PrinterConsole
 		_frame.setLayout(gridbag);
 		GridBagConstraints s = new GridBagConstraints();
 		s.fill = GridBagConstraints.NONE;
-		s.gridx = 1;
-		s.gridy = 1;
+		s.gridx = 0;
+		s.gridy = 0;
 		s.weightx = 1;
 		s.weighty = 1;
 		s.gridwidth = 1;
@@ -118,6 +128,14 @@ class PrinterConsole
 		s.insets.right = 2;
 		s.anchor = GridBagConstraints.WEST;
 
+		_carr = new PrinterCarriage();
+		JLabel plab = new JLabel("Platen:");
+		plab.setPreferredSize(new Dimension(60, 20));
+		_prog = new PrinterProgress();
+		JLabel rlab = new JLabel("Page:");
+		rlab.setPreferredSize(new Dimension(60, 20));
+
+		s.gridwidth = 3;
 		_chg_txt = new JLabel(" ");
 		_chg_txt.setPreferredSize(new Dimension(600, 20));
 		gridbag.setConstraints(_chg_txt, s);
@@ -130,16 +148,16 @@ class PrinterConsole
 		_frame.add(_font_txt);
 		s.gridy += 1;
 
-		_pitch_txt = new JLabel("Pitch:");
-		_pitch_txt.setPreferredSize(new Dimension(600, 20));
-		gridbag.setConstraints(_pitch_txt, s);
-		_frame.add(_pitch_txt);
-		s.gridy += 1;
-
 		_paper_txt = new JLabel("Paper:");
 		_paper_txt.setPreferredSize(new Dimension(600, 20));
 		gridbag.setConstraints(_paper_txt, s);
 		_frame.add(_paper_txt);
+		s.gridy += 1;
+
+		_pitch_txt = new JLabel("Pitch:");
+		_pitch_txt.setPreferredSize(new Dimension(600, 20));
+		gridbag.setConstraints(_pitch_txt, s);
+		_frame.add(_pitch_txt);
 		s.gridy += 1;
 
 		_sc_txt = new JLabel("Scaling:");
@@ -160,17 +178,39 @@ class PrinterConsole
 		_frame.add(_file_txt);
 		s.gridy += 1;
 
+		s.gridwidth = 1;
 		_pages_txt = new JLabel("Pages Printed:");
-		_pages_txt.setPreferredSize(new Dimension(600, 20));
+		_pages_txt.setPreferredSize(new Dimension(200, 20));
 		gridbag.setConstraints(_pages_txt, s);
 		_frame.add(_pages_txt);
+		++s.gridx;
+		s.anchor = GridBagConstraints.EAST;
+		gridbag.setConstraints(rlab, s);
+		_frame.add(rlab);
+		++s.gridx;
+		s.anchor = GridBagConstraints.WEST;
+		gridbag.setConstraints(_prog, s);
+		_frame.add(_prog);
+		--s.gridx;
+		--s.gridx;
 		s.gridy += 1;
 
 		_status_txt = new JLabel("Printer:");
-		_status_txt.setPreferredSize(new Dimension(600, 20));
+		_status_txt.setPreferredSize(new Dimension(200, 20));
 		gridbag.setConstraints(_status_txt, s);
 		_frame.add(_status_txt);
+		++s.gridx;
+		s.anchor = GridBagConstraints.EAST;
+		gridbag.setConstraints(plab, s);
+		_frame.add(plab);
+		++s.gridx;
+		s.anchor = GridBagConstraints.WEST;
+		gridbag.setConstraints(_carr, s);
+		_frame.add(_carr);
+		--s.gridx;
+		--s.gridx;
 		s.gridy += 1;
+		s.gridwidth = 3;
 
 		_mb = new JMenuBar();
 
@@ -182,5 +222,6 @@ class PrinterConsole
 
 	public void addMenu(JMenu mu) {
 		_mb.add(mu);
+		_frame.pack();	// this is needed to avoid gridbag squeeze
 	}
 }

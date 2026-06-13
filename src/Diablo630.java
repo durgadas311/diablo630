@@ -18,7 +18,7 @@ import javax.print.attribute.*;
 import javax.print.attribute.standard.*;
 
 class Diablo630 extends Printer_Paper
-	implements ActionListener, Runnable
+	implements Cleanup, ActionListener, Runnable
 {
 	static final int A_X_CLEAR = (Printer_Paper.A_SHAD |
 					Printer_Paper.A_BOLD |
@@ -655,7 +655,7 @@ class Diablo630 extends Printer_Paper
 		if (gui) {
 			_fset = new FontDialog();
 
-			_cons = new PrinterConsole("Diablo 630 Console");
+			_cons = new PrinterConsole("Diablo 630 Console", this);
 			JMenu mu;
 			JMenuItem mi;
 			mu = new JMenu("File");
@@ -1323,6 +1323,12 @@ class Diablo630 extends Printer_Paper
 		return b;
 	}
 
+	public void cleanup() {
+		try {
+			_fosFile.delete();
+		} catch (Exception ee) {}
+	}
+
 	public void runPrinter(String file) {
 		int status = 0;
 		_outName = file;
@@ -1342,5 +1348,6 @@ class Diablo630 extends Printer_Paper
 			status = p2s.getStatus();
 			endJob(status);	// closes _fos
 		} while (status >= 0);
+		cleanup();
 	}
 }

@@ -10,7 +10,8 @@ CORE_CLASSES =	\
 		FontDialog.class \
 		PrinterConsole.class \
 		PageProgress.class \
-		PaperPaintable.class
+		PaperPaintable.class \
+		Cleanup.class
 
 D630_CLASSES =	\
 		Diablo630stdin.class \

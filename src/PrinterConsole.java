@@ -2,13 +2,15 @@
 
 import java.io.*;
 import java.awt.*;
+import java.awt.event.*;
 import java.awt.font.*;
 import java.util.Map;
 import javax.swing.*;
 import javax.print.attribute.standard.*;
 
-class PrinterConsole
+class PrinterConsole implements WindowListener
 {
+	private Cleanup _clp;
 	private String _descr;
 	private JFrame _frame;
 	private JMenuBar _mb;
@@ -118,9 +120,11 @@ class PrinterConsole
 		}
 	}
 
-	public PrinterConsole(String descr) {
+	public PrinterConsole(String descr, Cleanup clp) {
+		_clp = clp;
 		_descr = descr;
 		_frame = new JFrame(_descr);
+		_frame.addWindowListener(this);
 		GridBagLayout gridbag = new GridBagLayout();
 		_frame.setLayout(gridbag);
 		GridBagConstraints s = new GridBagConstraints();
@@ -220,5 +224,15 @@ class PrinterConsole
 	public void addMenu(JMenu mu) {
 		_mb.add(mu);
 		_frame.pack();	// this is needed to avoid gridbag squeeze
+	}
+
+	public void windowActivated(WindowEvent e) { }
+	public void windowClosed(WindowEvent e) { }
+	public void windowIconified(WindowEvent e) { }
+	public void windowOpened(WindowEvent e) { }
+	public void windowDeiconified(WindowEvent e) { }
+	public void windowDeactivated(WindowEvent e) { }
+	public void windowClosing(WindowEvent e) {
+		_clp.cleanup();
 	}
 }

@@ -7,6 +7,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.Date;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.text.SimpleDateFormat;
 import java.io.*;
 import java.awt.*;
@@ -712,6 +714,24 @@ class Diablo630 extends Printer_Paper
 		t.start();
 	}
 
+	// Filename must contain exactly one "%j", no other subs.
+	private void scanJobId(File file) {
+		// TODO: also reject if multiple "%j"
+		if (file.getName().matches(".*%[xstdfb].*")) {
+			// System.err.format("too many subs in filename\n");
+			return;
+		}
+		Pattern p = Pattern.compile(file.getName().replace("%j", "(\\d+)"));
+		for (String s : trueDir(file).list()) {
+			Matcher m = p.matcher(s);
+			if (m.matches()) {
+				int j = Integer.valueOf(m.group(1));
+				if (j > jobId) jobId = j;
+			}
+		}
+		// System.err.format("setting Job Id to %d\n", jobId);
+	}
+
 	public void endPage() {
 		// FF at start - ignore
 		if (_pages == 0 && _partial == 0) return;
@@ -1335,6 +1355,9 @@ class Diablo630 extends Printer_Paper
 		_file = new File(_outName);
 		if (_cons != null) {
 			_cons.setFileName(_file);
+		}
+		if (file.indexOf("%j") >= 0) {
+			scanJobId(_file); // try to guess last used jobId
 		}
 		try {
 			_fosFile = File.createTempFile(".out", ".ps", trueDir(_file));

@@ -1,0 +1,141 @@
+
+
+Jun 15 22:53 2026	setprint.asm	 Page 1
+
+
+		; remote setup for a Virtual Diablo 630
+		; SETPRINT <prop-file>	; send properties to printer
+		; SETPRINT D		; restore defaults in printer
+		
+0000          	cpm	equ	0
+0005          	bdos	equ	5
+005C          	deffcb	equ	5ch
+0080          	defbuf	equ	80h
+		
+000D          	CR	equ	13
+000A          	LF	equ	10
+001B          	ESC	equ	27
+001A          	EOF	equ	26
+		
+0005          	lstoutf	equ	5
+0009          	printf	equ	9
+000F          	openf	equ	15
+0010          	closef	equ	16
+0014          	readf	equ	20
+001A          	setdmaf	equ	26
+		
+0100          		org	100h
+0100  C34901  		jmp	start
+		
+0103  1B461A  	esc$f:	db	ESC,'F',EOF
+0106  1B471A  	esc$g:	db	ESC,'G',EOF
+0109  1B561A  	esc$v:	db	ESC,'V',EOF
+		
+010C  4E6F2066	n$file:	db	'No file$'
+      696C6524
+0114  55736167	help:	db	'Usage: SETPRINT <property-file>',CR,LF
+      653A2053
+      45545052
+      494E5420
+      3C70726F
+      70657274
+      792D6669
+      6C653E0D
+      0A
+0135  20202020		db	'       SETPRINT D',CR,LF,'$'
+      20202053
+      45545052
+      494E5420
+      440D0A24
+		
+0149  3A5D00  	start:	lda	deffcb+1
+014C  FE20    		cpi	' '
+014E  CAB901  		jz	usage
+0151  FE44    		cpi	'D'
+0153  C26E01  		jnz	dofile
+0156  3A5E00  		lda	deffcb+2
+0159  FE20    		cpi	' '
+015B  C26E01  		jnz	dofile
+015E  3A5C00  		lda	deffcb
+0161  B7      		ora	a
+0162  C26E01  		jnz	dofile
+
+
+Jun 15 22:53 2026	setprint.asm	 Page 2
+
+
+			; revert back to defaults
+0165  110901  		lxi	d,esc$v
+0168  CDC401  		call	lstout
+016B  C30000  		jmp	cpm
+		
+016E  115C00  	dofile:	lxi	d,deffcb
+0171  0E0F    		mvi	c,openf
+0173  CD0500  		call	bdos
+0176  3C      		inr	a
+0177  CAAE01  		jz	nofile
+		
+017A  11D401  		lxi	d,lstbuf
+017D  0E1A    		mvi	c,setdmaf
+017F  CD0500  		call	bdos
+		
+0182  110301  		lxi	d,esc$f
+0185  CDC401  		call	lstout
+		
+0188  115C00  	loop:	lxi	d,deffcb
+018B  0E14    		mvi	c,readf
+018D  CD0500  		call	bdos
+0190  B7      		ora	a
+0191  C29D01  		jnz	done
+			;
+0194  11D401  		lxi	d,lstbuf
+0197  CDC401  		call	lstout
+019A  C38801  		jmp	loop
+		
+019D  110601  	done:	lxi	d,esc$g
+01A0  CDC401  		call	lstout
+01A3  115C00  		lxi	d,deffcb
+01A6  0E10    		mvi	c,closef
+01A8  CD0500  		call	bdos
+01AB  C30000  		jmp	cpm
+		
+01AE  110C01  	nofile:	lxi	d,n$file
+01B1  0E09    		mvi	c,printf
+01B3  CD0500  		call	bdos
+01B6  C30000  		jmp	cpm
+		
+01B9  111401  	usage:	lxi	d,help
+01BC  0E09    		mvi	c,printf
+01BE  CD0500  		call	bdos
+01C1  C30000  		jmp	cpm
+		
+01C4  1A      	lstout:	ldax	d
+01C5  FE1A    		cpi	EOF
+01C7  C8      		rz
+01C8  D5      		push	d
+01C9  5F      		mov	e,a
+01CA  0E05    		mvi	c,lstoutf
+01CC  CD0500  		call	bdos
+01CF  D1      		pop	d
+01D0  13      		inx	d
+01D1  C3C401  		jmp	lstout
+		
+
+
+Jun 15 22:53 2026	setprint.asm	 Page 3
+
+
+01D4          	lstbuf:	ds	128
+0254  1A      		db	EOF
+		
+0255          		end
+
+
+
+Statistics:
+
+     4	passes
+     0	jr promotions
+    27	symbols
+   213	bytes
+

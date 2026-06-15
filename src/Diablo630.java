@@ -66,6 +66,7 @@ class Diablo630 extends Printer_Paper
 	private boolean _just;
 	private boolean _cntr;
 	private String _cline;
+	private String _pstr;	// properties for ESC F
 	private boolean _grph;
 	private int _attr;
 	private float _off;
@@ -75,15 +76,19 @@ class Diablo630 extends Printer_Paper
 	private float _fw, _fa;
 	private float _vsi, _hsi;	// changed by printer commands
 	private float _vsx, _hsx;
+
+	private Properties initProps; // init properties plus GUI changes
+
+	// Things alterable by "reconfig"
 	// may be changed mid-job without affecting
 	MediaSizeName _ms;
 	OrientationRequested _or;
-	PaperPaintable _bkg;
 	PageFormat _pf;
 	private float _lm;
 	private float _tm;
 	private int _lpi;
 	private int _cpi;
+
 	// These are all derived during init/setPaper, not changed after
 	private float _pw, _ph;	// adjusted for orientation
 	private float _ppw, _pph;	// _ppw is always short edge
@@ -196,7 +201,7 @@ class Diablo630 extends Printer_Paper
 	}
 
 	public PaperPaintable getBkground() {
-		return _bkg;
+		return null;
 	}
 
 	private void clearPage() {
@@ -368,7 +373,7 @@ class Diablo630 extends Printer_Paper
 	// This can change during a print job without affecting it.
 	// Called from setup menu when paper has changed.
 	public void setupPaper(MediaSizeName ms, OrientationRequested or) {
-		MediaSize mz = _pset.paperSize(ms);
+		MediaSize mz = PaperDialog.paperSize(ms);
 		if (mz == null) {
 			System.err.println("Unsupported Page Size");
 			System.exit(1);
@@ -521,61 +526,10 @@ class Diablo630 extends Printer_Paper
 	}
 
 	public Diablo630(Properties props, InputStream in) {
-		int lpi = 6;
-		int cpi = 10;
-		Font font = new Font("Monospaced", Font.PLAIN, 12);
-		String[] fargs = null;
-		String[] pargs = null;
-		String p = props.getProperty("diablo630_cpi");
-		if (p != null) {
-			int c = getCpi(p);
-			if (c != 0) {
-				cpi = c;
-			}
-		}
-		p = props.getProperty("diablo630_lpi");
-		if (p != null) {
-			int l = getLpi(p);
-			if (l != 0) {
-				lpi = l;
-			}
-		}
-		p = props.getProperty("diablo630_scale");
-		if (p != null) {
-			_scale = Float.valueOf(p);
-		}
-		_lm = 0.0f;
-		_tm = 0.0f;
-		p = props.getProperty("diablo630_left");
-		if (p != null) {
-			_lm = Float.valueOf(p);
-		}
-		p = props.getProperty("diablo630_top");
-		if (p != null) {
-			_tm = Float.valueOf(p);
-		}
-		p = props.getProperty("diablo630_font");
-		if (p != null) {
-			fargs = p.split("[,\\s]");
-			// TODO: check validity?
-			if (fargs.length != 3) {
-			}
-		}
-		p = props.getProperty("diablo630_alt_color");
-		if (p != null) {
-			_alt = new Color(Integer.valueOf(p, 16));
-		}
-		p = props.getProperty("diablo630_paper");
-		if (p != null) {
-			pargs = p.split("[,\\s]");
-		}
-		getSpclProp(props, ESC_H);
-		getSpclProp(props, ESC_I);
-		getSpclProp(props, ESC_J);
-		getSpclProp(props, ESC_K);
-		getSpclProp(props, ESC_Y);
-		getSpclProp(props, ESC_Z);
-		p = props.getProperty("diablo630_nogui");
+		initProps = props;
+		_inp = in;
+		_cons = null;
+		String p = props.getProperty("diablo630_nogui");
 		if (p != null) {
 			// TODO: how to interpret values...
 			try {
@@ -598,63 +552,8 @@ class Diablo630 extends Printer_Paper
 				tee = new FileOutputStream(teeName);
 			} catch (Exception ee) {}
 		}
-		if (fargs != null) {
-			// TODO: fully parse font args
-			int fs = Font.PLAIN;
-			int fp = 12;
-			try {
-				fp = Integer.valueOf(fargs[2]);
-			} catch (Exception ee) {}
-			font = new Font(fargs[0], fs, fp);
-		}
-
-		_ms = MediaSizeName.NA_LETTER;
-		_or = OrientationRequested.PORTRAIT;
-		_bkg = null;
-		if (pargs != null) {
-			for (String parg : pargs) {
-				if (parg.equalsIgnoreCase("LETTER")) {
-					_ms = MediaSizeName.NA_LETTER;
-				} else if (parg.equalsIgnoreCase("LEGAL")) {
-					_ms = MediaSizeName.NA_LEGAL;
-				} else if (parg.equalsIgnoreCase("A4")) {
-					_ms = MediaSizeName.ISO_A4;
-				} else if (parg.equalsIgnoreCase("FORMS")) {
-					_ms = PaperDialog.getForms();
-				} else if (parg.equalsIgnoreCase("PORTRAIT")) {
-					_or = OrientationRequested.PORTRAIT;
-				} else if (parg.equalsIgnoreCase("LANDSCAPE")) {
-					_or = OrientationRequested.LANDSCAPE;
-				}
-			}
-		}
-
-		_inp = in;
-		_font = font;
-		_lpi = lpi;
-		_cpi = cpi;
-		// default to portrait 8.5x11, aligned upper-left corner (no margin)
-		_dir = true;
-
-		_vsi = 72 / _lpi; // re-computed later in init()
-		_hsi = 72 / _cpi; // re-computed later in init()
-		_vsx = 72;
-		_hsx = 72;
-
-		_adjacent = true;
-		_page_done = false;
-		_esc = 0;
-		_pages = 0;
-		_partial = 0;
-		_changed = true;
-		_font_chg = true;
-		_init = false;
-		_cons = null;
-		// We need this for paper management...
-		_pset = new PaperDialog();
-		setupPaper(_ms, _or);
-
 		if (gui) {
+			_pset = new PaperDialog();
 			_fset = new FontDialog();
 
 			_cons = new PrinterConsole("Diablo 630 Console", this);
@@ -693,15 +592,8 @@ class Diablo630 extends Printer_Paper
 			_cons.addMenu(mu);
 
 			timer = new Timer(50, this);
-
-			_cons.setFont(_font);
-			_cons.setPitch(_cpi, _lpi);
-			_cons.setPaper(_ms, _or);
-			_cons.setScale(_scale);
-			_cons.setPosition(_lm, _tm);
-			_cons.setPages(_pages, _partial);
-			_cons.setStatus("Idle");
 		}
+		reconfig(initProps);
 
 		_pipe_i = new PipedInputStream();
 		try {
@@ -712,6 +604,134 @@ class Diablo630 extends Printer_Paper
 		}
 		Thread t = new Thread(this);
 		t.start();
+	}
+
+	private void reconfig(Properties props) {
+		_lpi = 6;
+		_cpi = 10;
+		_scale = 1.0f;
+		_lm = 0.0f;
+		_tm = 0.0f;
+		_ms = MediaSizeName.NA_LETTER;
+		_or = OrientationRequested.PORTRAIT;
+		_alt = Color.red;
+		_font = new Font("Monospaced", Font.PLAIN, 12);
+		String p = props.getProperty("diablo630_cpi");
+		if (p != null) {
+			int c = getCpi(p);
+			if (c != 0) {
+				_cpi = c;
+			}
+		}
+		p = props.getProperty("diablo630_lpi");
+		if (p != null) {
+			int l = getLpi(p);
+			if (l != 0) {
+				_lpi = l;
+			}
+		}
+		p = props.getProperty("diablo630_scale");
+		if (p != null) {
+			_scale = Float.valueOf(p);
+		}
+		p = props.getProperty("diablo630_left");
+		if (p != null) {
+			_lm = Float.valueOf(p);
+		}
+		p = props.getProperty("diablo630_top");
+		if (p != null) {
+			_tm = Float.valueOf(p);
+		}
+		p = props.getProperty("diablo630_font");
+		if (p != null) {
+			String[] fargs = p.split("[,\\s]");
+			// TODO: check validity?
+			if (fargs.length != 3) {
+			}
+			// TODO: fully parse font args
+			int fs = Font.PLAIN;
+			int fp = 12;
+			try {
+				fp = Integer.valueOf(fargs[2]);
+			} catch (Exception ee) {}
+			_font = new Font(fargs[0], fs, fp);
+		}
+		p = props.getProperty("diablo630_alt_color");
+		if (p != null) {
+			_alt = new Color(Integer.valueOf(p, 16));
+		}
+		p = props.getProperty("diablo630_paper");
+		if (p != null) {
+			String[] pargs = p.split("[,\\s]");
+			for (String parg : pargs) {
+				if (parg.equalsIgnoreCase("LETTER")) {
+					_ms = MediaSizeName.NA_LETTER;
+				} else if (parg.equalsIgnoreCase("LEGAL")) {
+					_ms = MediaSizeName.NA_LEGAL;
+				} else if (parg.equalsIgnoreCase("A4")) {
+					_ms = MediaSizeName.ISO_A4;
+				} else if (parg.equalsIgnoreCase("FORMS")) {
+					_ms = PaperDialog.getForms();
+				} else if (parg.equalsIgnoreCase("PORTRAIT")) {
+					_or = OrientationRequested.PORTRAIT;
+				} else if (parg.equalsIgnoreCase("LANDSCAPE")) {
+					_or = OrientationRequested.LANDSCAPE;
+				}
+			}
+		}
+		getSpclProp(props, ESC_H);
+		getSpclProp(props, ESC_I);
+		getSpclProp(props, ESC_J);
+		getSpclProp(props, ESC_K);
+		getSpclProp(props, ESC_Y);
+		getSpclProp(props, ESC_Z);
+
+		// reset everything, some based on new settigns
+		_dir = true;
+
+		_vsi = 72 / _lpi; // re-computed later in init()
+		_hsi = 72 / _cpi; // re-computed later in init()
+		_vsx = 72;
+		_hsx = 72;
+
+		_adjacent = true;
+		_page_done = false;
+		_esc = 0;
+		_pages = 0;
+		_partial = 0;
+		_changed = true;
+		_font_chg = true;
+		_init = false;
+		setupPaper(_ms, _or);
+		if (_cons != null) {
+			_cons.setFont(_font);
+			_cons.setPitch(_cpi, _lpi);
+			_cons.setPaper(_ms, _or);
+			_cons.setScale(_scale);
+			_cons.setPosition(_lm, _tm);
+			_cons.setPages(_pages, _partial);
+			_cons.setStatus("Idle");
+		}
+	}
+
+	private void newProps() {
+		//System.err.format("new props \"%s\"\n", _pstr);
+		Reader r = new StringReader(_pstr);
+		Properties p = new Properties();
+		try {
+			p.load(r);
+		} catch (Exception ee) {
+			ee.printStackTrace();
+			return;
+		}
+		_pstr = null;
+		// add "diablo630_" prefix if missing
+		for (String prop : p.stringPropertyNames()) {
+			if (prop.startsWith("diablo630_")) continue;
+			String val = p.getProperty(prop);
+			p.setProperty("diablo630_" + prop, val);
+		}
+		reconfig(p);
 	}
 
 	// Filename must contain exactly one "%j", no other subs.
@@ -864,6 +884,9 @@ class Diablo630 extends Printer_Paper
 	}
 
 	private String do_esc2(byte b) {
+		if (_pstr != null) {
+			return null;
+		}
 		String ret = null; // non-printable...
 		switch(_esc) {
 		case '\t': // TAB - tab to col
@@ -925,6 +948,20 @@ class Diablo630 extends Printer_Paper
 		case 31:   // US - set HSI
 			_esc = b;
 			break;
+		case 'F':	// non-standard: collect properties
+			_pstr = "";
+			break;
+		case 'G':	// non-standard: apply properties
+			newProps();
+			break;
+		case 'V':	// non-standard: revert properties
+			reconfig(initProps);
+			break;
+		}
+		if (_pstr != null) {
+			return null;
+		}
+		switch(b) {
 		case 2: // STX - unknown (emitted by WordStar)
 			// TODO: determine what this is supposed to do.
 			break;
@@ -1079,7 +1116,9 @@ class Diablo630 extends Printer_Paper
 	}
 
 	private void doBlank() {
-		if (_cntr) { // overrides everything
+		if (_pstr != null) { // overrides everything
+			_pstr += ' ';
+		} else if (_cntr) { // overrides everything
 			_cline += ' ';
 		} else if (_grph) {
 			_adjacent = false;
@@ -1104,6 +1143,20 @@ class Diablo630 extends Printer_Paper
 		String s = null;
 		if (_esc > 0) {
 			s = do_esc(b);
+		} else if (_pstr != null) {
+			if (b == 27) {	// ESC
+				_esc = 1;
+			} else if (b == '\r' || b == '\n') {
+				// Since _pstr will be parsed by this JVM,
+				// ensure we use the right lineSeparator.
+				// Although, Properties.load() seems flexible
+				// enough to handle this.
+				// TODO: try to combine "\r\n" into single one.
+				_pstr += System.lineSeparator();
+			} else if (b >= ' ' && b < 0x7f) {
+				_pstr += (char)b;
+			}
+			return false;
 		} else if (b <= ' ') { // control characters... incl BLANK
 			s = null;	// not strictly printable...
 			switch(b) {

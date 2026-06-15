@@ -18,11 +18,14 @@ class PaperDialog
 	private JTextField _sc_txt;
 	private float _lm, _tm, _sc;
 	MediaSizeName _ms;
-	static private M11x14 _m11x14;
-	static private F11x14 _f11x14;
 	OrientationRequested _or;
 	JOptionPane _prefs;
 	Object[] _btns;
+
+	///////////////////////////////////////////////
+	// Special case for 11x14 (14x11) "forms" paper
+	static private M11x14 _m11x14;
+	static private F11x14 _f11x14;
 
 	static {
 		_m11x14 = new M11x14();
@@ -46,6 +49,15 @@ class PaperDialog
 	}
 
 	static public MediaSizeName getForms() { return _m11x14; }
+
+	static public MediaSize paperSize(MediaSizeName ms) {
+		if (ms.equals(_m11x14)) {
+			return _f11x14;
+		} else {
+			return MediaSize.getMediaSizeForName(ms);
+		}
+	}
+	///////////////////////////////////////////////
 
 	public void setMedia(MediaSizeName ms) {
 		_ms = ms;
@@ -109,14 +121,6 @@ class PaperDialog
 			tm = Float.parseFloat(_tm_txt.getText());
 		} catch (Exception e) {}
 		return tm;
-	}
-
-	public MediaSize paperSize(MediaSizeName ms) {
-		if (ms.equals(_m11x14)) {
-			return _f11x14;
-		} else {
-			return MediaSize.getMediaSizeForName(ms);
-		}
 	}
 
 	public boolean doDialog(JFrame frame) {

@@ -212,7 +212,6 @@ class Diablo630 extends Printer_Paper
 	}
 
 	public void endJob(int sts) {
-		++jobId;
 		if (tee != null) {
 			try {
 				tee.close();
@@ -224,6 +223,7 @@ class Diablo630 extends Printer_Paper
 		}
 		//System.err.println("End of job");
 		boolean nothing = (_pages == 0 && _partial == 0);
+		boolean blank = blankPage();
 		// reset page count since file is now empty
 		_pages = 0;
 		_partial = 0;
@@ -237,12 +237,15 @@ class Diablo630 extends Printer_Paper
 		} catch (Exception ee) {}
 		_fos = null;
 		clearPage();
-		jobDate = new Date();
-		// Check for end-of-job actions...
-		// avoid corrupting SAVE file if aborting...
-		if (sts < 0 && blankPage() && nothing) {
+		// Avoid corrupting SAVE file if aborting with nothing printed.
+		// But, we never cycle the job if nothing was printed...
+		// if (sts < 0 && blank && nothing) {
+		if (blank && nothing) {
 			return;
 		}
+		++jobId;
+		// Check for end-of-job actions...
+		jobDate = new Date();
 		File dir = trueDir(_file);
 		// rename temp file _fos to user's preferred name.
 		jobFile = _fosName != null ? _fosFile : null;
@@ -712,6 +715,8 @@ class Diablo630 extends Printer_Paper
 			_cons.setPages(_pages, _partial);
 			_cons.setStatus("Idle");
 		}
+		clearPage(); // insure nothing is printed
+		inject(0xff); // this needs to be the very next char...
 	}
 
 	private void newProps() {

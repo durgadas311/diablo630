@@ -35,9 +35,12 @@ class PageProgress extends JPanel
 		if (img[cur] == null) return;
 		int xx = (int)Math.round((float)x / 10f);
 		int yy = (int)Math.round((float)y / 10f);
+		if (yy >= img[cur].getHeight()) return;
 		v = yy;
 		for (int a = 0; a < len; ++a) {
-			img[cur].setRGB(xx + a, yy, black);
+			if (xx + a < img[cur].getWidth()) {
+				img[cur].setRGB(xx + a, yy, black);
+			}
 		}
 		repaint();
 	}

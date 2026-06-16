@@ -24,3 +24,6 @@ An [example of output](examples/ws-print.pdf)
 from WordStar printing PRINT.TST from distribution disk.
 Note: first and last pages are intentionally blank, due to
 WordStar using extra Form Feed characters.
+
+An [example of remote config setting](EXAMPLE1.md), using
+new ESC sequences to upload config properties form the legacy computer.

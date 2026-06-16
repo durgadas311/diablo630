@@ -31,7 +31,7 @@ class Print2DtoStream implements Printable {
 		StreamPrintServiceFactory[] spsf =
 			PrinterJob.lookupStreamPrintServices("application/postscript");
 		if (spsf.length == 0) {
-			// TODO: do something to indicate error...
+			status = -1;
 			return;
 		}
 		StreamPrintService ps = spsf[0].getPrintService(fos);
@@ -45,6 +45,7 @@ class Print2DtoStream implements Printable {
 			pj.print(attr);
 		} catch (Exception ee) {
 			ee.printStackTrace();
+			status = -1;
 		}
 	}
 
@@ -71,6 +72,7 @@ class Print2DtoStream implements Printable {
 					break;
 				}
 				if (b == 255) {
+					if (_prtr.blankPage()) did = 0;
 					status = 255; // End Job, start another.
 					break;
 				}

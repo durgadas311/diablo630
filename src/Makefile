@@ -1,3 +1,5 @@
+JAVAC_REL =
+
 all:
 
 CORE_CLASSES =	\
@@ -31,12 +33,19 @@ SUPP_CLASSES = \
 JSERIAL = jserialcomm/jSerialComm-2.9.3.jar
 
 %.class: %.java
-	javac $?
+	javac $(JAVAC_REL) $?
 
 Diablo630tty.class: Diablo630tty.java $(JSERIAL)
-	javac -cp .:$(JSERIAL) $<
+	javac $(JAVAC_REL) -cp .:$(JSERIAL) $<
 
 jar: Diablo630.jar Diablo630telnet.jar Diablo630tty.jar Diablo630Embedded.jar
+
+java11:
+	mkdir -p temp
+	cp -r $$(git ls-files) temp
+	make -C temp jar JAVAC_REL="--release 11"
+	cp temp/*.jar ../java11
+	rm -rf temp
 
 Diablo630.jar: $(D630_CLASSES) $(CORE_CLASSES) $(SUPP_CLASSES)
 	echo "Main-Class: Diablo630stdin" >Manifest.txt

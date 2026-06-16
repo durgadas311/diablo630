@@ -47,3 +47,14 @@ A0>
 
 See the [results of this print](examples/ex1p2.pdf).
 
+The SETPRINT program will send a plain-text file of
+property settings to the printer and activate the new
+configuration.
+
+```
+A0>setprint
+Usage: SETPRINT <property-file>
+       SETPRINT D
+
+A0>
+```

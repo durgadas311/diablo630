@@ -51,7 +51,7 @@ public class Diablo630tty {
 			baud = 9600;	// some default
 		}
 		String file = props.getProperty("diablo630_file");
-		if (s == null) {
+		if (file == null) {
 			file = "out.ps";
 		}
 		if (tty == null) {

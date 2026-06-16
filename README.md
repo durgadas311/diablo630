@@ -3,7 +3,7 @@
 This project uses submodules. After clone, run "git submodule init".
 Refresh with "git submodule update --remote".
 
-The program accepts Diable 630 (Juki 6100) input and produces PostScript
+The program accepts Diablo 630 (Juki 6100) input and produces PostScript
 files. By default provides a GUI to allow basic printer control.
 Printing is job oriented, sending a 0FFH character to the printer
 indicates the end of a job (and the beginning of a new one). This is the

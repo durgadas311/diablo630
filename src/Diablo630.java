@@ -33,13 +33,16 @@ class Diablo630 extends Printer_Paper
 					Printer_Paper.A_UNDL);
 
 	static final int ESC_H=0, ESC_I=1, ESC_J=2, ESC_K=3, ESC_Y=4, ESC_Z=5;
-	private String[] _sppr = new String[]{ "h", "i", "j", "k", "y", "z" };
-	private String[] _spcl = new String[]{
+	private final String[] _sppr = new String[]{ "h", "i", "j", "k", "y", "z" };
+	private String[] _spcl = new String[_sppr.length];
+	private final String[] _sdef = new String[]{
 			"\u00A7", "\u00A3", "\u00A8", "\u00E7", "\u00A2", "\u00AC" };
 
 	int _pages;
 	int _partial;
 	boolean gui = true;
+	boolean auto_lf;
+	boolean col132_nl;
 	String teeName = null;
 	OutputStream tee = null;
 	PrinterConsole _cons;
@@ -50,6 +53,7 @@ class Diablo630 extends Printer_Paper
 	private File _fosFile;
 	private String _fosName;
 	private Font _font;
+	private boolean propFont;
 	private PaperDialog _pset;
 	private FontDialog _fset;
 	private InputStream _inp;
@@ -70,12 +74,12 @@ class Diablo630 extends Printer_Paper
 	private boolean _grph;
 	private int _attr;
 	private float _off;
+	private int _phu;	// user-set page height (ESC FF n)
 	private int _esc;
 	private float _x, _y;
 	// These must remain stable during a job
 	private float _fw, _fa;
 	private float _vsi, _hsi;	// changed by printer commands
-	private float _vsx, _hsx;
 
 	private Properties initProps; // init properties plus GUI changes
 
@@ -332,14 +336,6 @@ class Diablo630 extends Printer_Paper
 		}
 	}
 
-	private void setCarriage(float x) {
-		// TODO: force sane value here instead of by callers?
-		_x = x;
-	}
-
-	private void setProgress(float y) {
-	}
-
 	private void showPrint(float x, float y, int len) {
 		if (_cons != null) {
 			_cons.setPrint((int)x, (int)y, len);
@@ -359,7 +355,8 @@ class Diablo630 extends Printer_Paper
 		// _cpi, _lpi, _lm, _tm are set by config or menu - leave alone
 		_hsi = 72.0f / _cpi;
 		_vsi = 72.0f / _lpi;
-		setCarriage(0);
+		_phu = _phx;
+		_x = 0;
 		_page_done = true; // start over (clearPage()) on next char
 		// TODO: avoid extra blank page
 	}
@@ -407,15 +404,14 @@ class Diablo630 extends Printer_Paper
 		_pf = pf;
 	}
 
-	// _hsx/_vsx must be established prior to calling this
-	// also _pw/_ph must have been set.
+	// _pw/_ph must have been set.
 	public void setPaper(float l, float t) {
-		float lm = _hsx * l;
-		float tm = _vsx * t;
+		float lm = 72f * l;
+		float tm = 72f * t;
 		// TODO: allow scaling...
 		// TODO: round values?
-		float pw = _hsx * _pw;
-		float ph = _vsx * _ph;
+		float pw = 72f * _pw;
+		float ph = 72f * _ph;
 		if (_scale > 0f) {
 			pw /= _scale;
 			ph /= _scale;
@@ -423,6 +419,7 @@ class Diablo630 extends Printer_Paper
 		int pwx = (int)Math.floor(pw);
 		int phx = (int)Math.floor(ph);
 		setScale(pwx, phx);
+		_phu = _phx;
 		if (_cons != null) {
 			_cons.setPage(pwx, phx);
 		}
@@ -441,16 +438,19 @@ class Diablo630 extends Printer_Paper
 		if (_font_chg) {
 			// any of font or cpi have changed...
 			// cpi/lpi is trivial so always done.
-			String fmt = "%0" + _cpi + "d";
-			String txt = String.format(fmt, 0);
+			String txt = String.valueOf('0').repeat(_cpi);
 			FontRenderContext frc = g2d.getFontRenderContext();
+			double i = _font.getStringBounds("i", frc).getWidth();
+			double m = _font.getStringBounds("m", frc).getWidth();
+			propFont = (i != m);
+			// TODO: compute prop spacing table
 			float x = (float)_font.getStringBounds(txt, frc).getWidth();
 			LineMetrics lm = _font.getLineMetrics(txt, frc);
 			_fa = lm.getAscent();
 			// Because we adjust font tracking to match _cpi,
-			// _hsi/_hsx become trivial/constant like _vsx/_vsi.
-			if (x != 72) {
-				float t = (72 - x) / _cpi / _font.getSize2D();
+			// _hsi becomes trivial/constant like _vsi.
+			if (x != 72f) {
+				float t = (72f - x) / _cpi / _font.getSize2D();
 				//System.err.format("Tracking = %f\n", t);
 				Map<TextAttribute, Object> atr = new HashMap<TextAttribute, Object>();
 				atr.put(TextAttribute.TRACKING, t);
@@ -515,7 +515,7 @@ class Diablo630 extends Printer_Paper
 		return rc;
 	}
 
-	static List<String> bools = Arrays.asList("nogui");
+	static List<String> bools = Arrays.asList("nogui", "auto_lf", "col132_nl");
 	public static void processArgs(Properties props, String[] args,
 				List<String> _bools, String[] seq) {
 		int x = 0;
@@ -618,6 +618,9 @@ class Diablo630 extends Printer_Paper
 		_scale = 1.0f;
 		_lm = 0.0f;
 		_tm = 0.0f;
+		auto_lf = false;
+		col132_nl = false;
+		System.arraycopy(_sdef, 0, _spcl, 0, _spcl.length);
 		_ms = MediaSizeName.NA_LETTER;
 		_or = OrientationRequested.PORTRAIT;
 		_alt = Color.red;
@@ -635,6 +638,20 @@ class Diablo630 extends Printer_Paper
 			if (l != 0) {
 				_lpi = l;
 			}
+		}
+		p = props.getProperty("diablo630_auto_lf");
+		if (p != null) {
+			// TODO: how to interpret values...
+			try {
+				auto_lf = Boolean.valueOf(p);
+			} catch (Exception ee) {}
+		}
+		p = props.getProperty("diablo630_col132_nl");
+		if (p != null) {
+			// TODO: how to interpret values...
+			try {
+				col132_nl = Boolean.valueOf(p);
+			} catch (Exception ee) {}
 		}
 		p = props.getProperty("diablo630_scale");
 		if (p != null) {
@@ -695,10 +712,8 @@ class Diablo630 extends Printer_Paper
 		// reset everything, some based on new settigns
 		_dir = true;
 
-		_vsi = 72 / _lpi; // re-computed later in init()
-		_hsi = 72 / _cpi; // re-computed later in init()
-		_vsx = 72;
-		_hsx = 72;
+		_vsi = 72f / _lpi; // re-computed later in init()
+		_hsi = 72f / _cpi; // re-computed later in init()
 
 		_adjacent = true;
 		_page_done = false;
@@ -784,7 +799,7 @@ class Diablo630 extends Printer_Paper
 			return;
 		}
 		_y += _vsi;
-		if (_y >= _phx) {
+		if (_y >= _phu) {
 			endPage();
 		}
 	}
@@ -810,29 +825,41 @@ class Diablo630 extends Printer_Paper
 		if (_y < 0) _y = 0;
 	}
 
+	// Any forward advance of the carriage.
+	// never called if _grph.
 	private void space() {
 		float x = _x + _hsi + _off;
-		if (x >= _pwx) x = _pwx - 1;
-		setCarriage(x);
+		if (x >= _pwx) {
+			if (col132_nl) { // not techincally correct -
+					// may not be col 132
+				_adjacent = false;
+				x = 0;
+				index();
+			} else {
+				x = _pwx - 1;
+			}
+		}
+		_x = x;
 	}
 
 	private void bk1tic() {
 		float x = _x - 0.6f; // 1/120 == 0.6 pt
 		if (x < 0) x = 0;
-		setCarriage(x);
+		_x = x;
 	}
 
 	private void bkspace() {
 		float x = _x - _hsi + _off;
 		if (x < 0) x = 0;
-		setCarriage(x);
+		_x = x;
 	}
 
+	// Move after printing
 	private void forward() {
 		if (_grph) {
 			float x = _x + 1.2f;	// pts, 1/60" (2/120")
 			if (x >= _pwx) x = _pwx - 1;
-			setCarriage(x);
+			_x = x;
 		} else if (_dir) {
 			space();
 		} else {
@@ -849,7 +876,7 @@ class Diablo630 extends Printer_Paper
 		if (_grph) {
 			float x = _x - 1.2f; // pts, 1/60" (2/120")
 			if (x < 0) x = 0;
-			setCarriage(x);
+			_x = x;
 		} else if (_dir) {
 			bkspace();
 		} else {
@@ -862,7 +889,7 @@ class Diablo630 extends Printer_Paper
 		int x = (int)Math.floor(_x / _fw);
 		x &= ~7;
 		x += 8;
-		setCarriage(x * _fw);
+		_x = (float)x * _fw;
 	}
 
 	private void gotoCol(int col) {
@@ -870,7 +897,7 @@ class Diablo630 extends Printer_Paper
 		if (x >= _pwx) {
 			return;
 		}
-		setCarriage(x);
+		_x = x;
 	}
 
 	private void gotoLine(int line) {
@@ -902,6 +929,9 @@ class Diablo630 extends Printer_Paper
 			_adjacent = false;
 			break;
 		case 12: // FF - set lines/page
+			if (b < 1 || b > 126) break;
+			_phu = (int)Math.floor((float)b * _vsi);
+			if (_phu > _phx) _phu = _phx;
 			break;
 		case 11: // VT - v-tab to line
 			gotoLine((b - 1) & 0x7f);
@@ -909,16 +939,16 @@ class Diablo630 extends Printer_Paper
 			break;
 		case 17: // DC1 - set horiz offset
 			// TODO: need to handle ESC Z = 01111111b?
-			_off = ((float)(b & 0x3f) * _hsx) / 120.0f;
+			_off = ((float)(b & 0x3f) * 72f) / 120.0f;
 			if (_off != 0 && (b & 0x40) != 0) {
 				_off = -_off;
 			}
 			break;
 		case 30: // RS - set VSI
-			_vsi = ((b - 1) * _vsx) / 48.0f;
+			_vsi = ((float)(b - 1) * 72f) / 48.0f;
 			break;
 		case 31: // US - set HSI
-			_hsi = ((b - 1) * _hsx) / 120.0f;
+			_hsi = ((float)(b - 1) * 72f) / 120.0f;
 //System.err.format("_hsi=%f width=%f\n", _hsi, _fw);
 			break;
 		case '\r': // CR - ignore?
@@ -1012,6 +1042,9 @@ class Diablo630 extends Printer_Paper
 			_attr &= ~Printer_Paper.A_UNDL;
 			_adjacent = false;
 			break;
+		case 'S':	// return to _cpi
+			_hsi = 72.0f / _cpi;
+			break;
 		case 'X':	// end bold/shadow/offset (or CR)
 			// TODO: finish/cancel any attrs
 			// cancel centering, discard chars
@@ -1078,9 +1111,11 @@ class Diablo630 extends Printer_Paper
 			break;
 		case '2':	// clear all vert/horiz tab stops
 			break;
-		case '?':	// enable auto-CR
+		case '?':	// enable auto-CR/LF on col 132
+			col132_nl = true;
 			break;
-		case '!':	// disable auto-CR
+		case '!':	// disable auto-CR/LF on col 132
+			col132_nl = false;
 			break;
 		// Juki printer extensions
 		case 'H':
@@ -1119,8 +1154,8 @@ class Diablo630 extends Printer_Paper
 		} else {
 			super.addPlot(s, _x, _y, _attr);
 		}
-		advance();
 		_adjacent = closeEnough(_hsi + _off, _fw);
+		advance(); // allow override of _adjacent
 	}
 
 	private void doBlank() {
@@ -1182,7 +1217,10 @@ class Diablo630 extends Printer_Paper
 				if (_cntr) {
 					doCenter();
 				}
-				setCarriage(0);
+				_x = 0;
+				if (auto_lf) {
+					index();
+				}
 				break;
 			case '\n':
 				// TODO: finish any attrs
@@ -1229,7 +1267,6 @@ class Diablo630 extends Printer_Paper
 			s += (char)b;
 		}
 		// Assumes progress is always down the page...
-		setProgress(_y);
 		int p = (int)Math.ceil((_y / _phx) * 10);
 		if (p > 9) {
 			p = 9;

@@ -1,5 +1,5 @@
 
-all: setprint.com
+all: setprint.com ff.com endlist.com canlist.com
 
 
 %.cim: %.asm

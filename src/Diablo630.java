@@ -244,6 +244,9 @@ class Diablo630 extends Printer_Paper
 			return;
 		}
 		++jobId;
+		if (sts == 254) { //cancel job, discard output
+			return;
+		}
 		// Check for end-of-job actions...
 		jobDate = new Date();
 		File dir = trueDir(_file);
@@ -1283,12 +1286,7 @@ class Diablo630 extends Printer_Paper
 				return;
 			}
 			if (m.getMnemonic() == KeyEvent.VK_D) {
-				// can't close _fos or else printjob will throw exception...
-				// So tell printjob that file changed, and unset _append
-				// to cause a truncate.
-				_changed = true;
-				_cons.setChanges(true);
-				inject(0xff);
+				inject(0xfe);
 				return;
 			}
 			if (m.getMnemonic() == KeyEvent.VK_P) {

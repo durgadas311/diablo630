@@ -76,6 +76,11 @@ class Print2DtoStream implements Printable {
 					status = 255; // End Job, start another.
 					break;
 				}
+				if (b == 254) {
+					did = 0;
+					status = 254; // Cancel Job, start another.
+					break;
+				}
 				++did;
 				if (_prtr.do_char((byte)b)) {
 					// End of Page...

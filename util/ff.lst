@@ -1,0 +1,29 @@
+
+
+Jun 16 18:49 2026	ff.asm	 Page 1
+
+
+		; send FF (form-feed) to printer
+		
+0005          	bdos	equ	5
+		
+000C          	FF	equ	12
+		
+0005          	lstoutf	equ	5
+		
+0100          		org	100h
+0100  1E0C    		mvi	e,FF
+0102  0E05    		mvi	c,lstoutf
+0104  C30500  		jmp	bdos
+		
+0107          		end
+
+
+
+Statistics:
+
+     3	passes
+     0	jr promotions
+     3	symbols
+     7	bytes
+

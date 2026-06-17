@@ -1,0 +1,29 @@
+
+
+Jun 16 18:49 2026	canlist.asm	 Page 1
+
+
+		; send Job Cancel to printer
+		
+0005          	bdos	equ	5
+		
+00FE          	CANJOB	equ	254
+		
+0005          	lstoutf	equ	5
+		
+0100          		org	100h
+0100  1EFE    		mvi	e,CANJOB
+0102  0E05    		mvi	c,lstoutf
+0104  C30500  		jmp	bdos
+		
+0107          		end
+
+
+
+Statistics:
+
+     3	passes
+     0	jr promotions
+     3	symbols
+     7	bytes
+

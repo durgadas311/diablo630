@@ -63,7 +63,7 @@ Diablo630tty.jar: Diablo630tty.class $(CORE_CLASSES) $(SUPP_CLASSES) $(JSERIAL)
 Diablo630Embedded.jar: $(CORE_CLASSES) $(SUPP_CLASSES)
 	jar -cMf $@ $(foreach x,$^,'$(x)')
 
-ship: jar
+ship: jar java11
 	cp *.jar ../bin
 
 clobber:

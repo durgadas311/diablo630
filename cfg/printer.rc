@@ -1,0 +1,3 @@
+# Example for sending completed jobs to the default printer on a Linux/Unix
+# system via the 'lp' facility.
+diablo630_jobend = queue lp %f

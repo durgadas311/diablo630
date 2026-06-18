@@ -47,8 +47,8 @@ ESC W | Begin shadow | Yes
 ESC X | Cancel modes | Yes, mostly
 ESC Y | (Juki) &#162; | Yes
 ESC Z | (Juki) &#172; | Yes
-ESC ? | Enable Auto-CR | Not Yet
-ESC ! | Disable Auto-CR | Not Yet
+ESC ? | Enable Auto-CR | Yes
+ESC ! | Disable Auto-CR | Yes
 ESC - | Set Vert-Tab Stop | Not Yet *
 ESC = | Auto Center | Yes (limited)
 ESC & | End bold/shadow | Yes

@@ -1,0 +1,5 @@
+# Example for leaving postscript output in unique files.
+# User is responsible for cleaning up files.
+diablo630_file = my-out%j.ps
+# May be used in combination with sending to printer, etc.
+# diablo630_jobend = queue lp %f

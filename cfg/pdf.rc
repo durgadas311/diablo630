@@ -1,0 +1,4 @@
+# Example for copying a job to a PDF file on Linux/Unix via 'ps2pdf'.
+# A unique, though non-descript, output file name is used.
+# User is responsible for cleaning up files.
+diablo630_jobend = queue ps2pdf %f out%j.pdf

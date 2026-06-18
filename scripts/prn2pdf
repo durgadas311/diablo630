@@ -1,15 +1,22 @@
 #!/bin/bash
-# Example of script to "print" an assembler listing file
-# (already formated with FF) to a PDF. Adjust path below
-# to Diablo630.jar as needed.
+# Adjust path below to Diablo630.jar as needed.
+JAR=~/git/diablo630/bin/Diablo630.jar
 
-if [[ ${#} -eq 0 ]]; then
-	echo "Usage: ${0} <listing-file>..." >&2
+# Example of script to convert an assembler listing file (already
+# formated with FF) to a PDF.
+
+# This script assumes that the file to be printed has no page header
+# (blank lines), such as PRN files from ASM, MAC, and RMAC.  A lst file
+# from zmac (using -P), for example, already has a header and so changing
+# to "top=0" below makes more sense.
+
+if [[ ${#} -ne 1 ]]; then
+	echo "Usage: ${0} <listing-file>" >&2
 	exit 1
 fi
-fn=${1##*/}
-fn=${fn%.*}
+fn=${1##*/} # strip off path from file
+fn=${fn%.*} # strip off first suffix (typ. ".ps")
 
-cat "${@}" | java -jar ~/git/diablo630/bin/Diablo630.jar \
-	top=0.5 left=0.5 paper=letter,landscape scale=0.8 \
+cat "${@}" | java -jar ${JAR} nogui \
+	top=0.5 left=0.5 paper=letter,landscape scale=0.77 \
 	jobend="queue ps2pdf %f ${fn}.pdf"

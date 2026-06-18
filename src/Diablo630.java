@@ -772,7 +772,11 @@ class Diablo630 extends Printer_Paper
 				if (j > jobId) jobId = j;
 			}
 		}
-		// System.err.format("setting Job Id to %d\n", jobId);
+		// System.err.format("setting Job Id to %d (%s)\n", jobId, file.getName());
+	}
+
+	private void scanJobId(String fn) {
+		scanJobId(new File(fn));
 	}
 
 	public void endPage() {
@@ -1451,6 +1455,15 @@ class Diablo630 extends Printer_Paper
 		}
 		if (file.indexOf("%j") >= 0) {
 			scanJobId(_file); // try to guess last used jobId
+		}
+		if (saveJob != null && saveJob.indexOf("%j") >= 0) {
+			scanJobId(saveJob); // try to guess last used jobId
+		}
+		if (queueJob != null) for (String qarg : queueJob) {
+			if (qarg.indexOf("%j") >= 0) {
+				scanJobId(qarg); // try to guess last used jobId
+				break;
+			}
 		}
 		try {
 			_fosFile = File.createTempFile(".out", ".ps", trueDir(_file));

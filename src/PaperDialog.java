@@ -123,6 +123,22 @@ class PaperDialog
 		return tm;
 	}
 
+	public MediaSizeName checkMedia(String m) {
+		int x = _ms_cb.getItemCount();
+		String na_m = "na-" + m;
+		String iso_m = "iso-" + m;
+		for (int i = 0; i < x; ++i) {
+			MediaSizeName ms = _ms_cb.getItemAt(i);
+			String n = ms.toString();
+			if (n.equalsIgnoreCase(m) ||
+					n.equalsIgnoreCase(na_m) ||
+					n.equalsIgnoreCase(iso_m)) {
+				return ms;
+			}
+		}
+		return null;
+	}
+
 	public boolean doDialog(JFrame frame) {
 		boolean chg = false;
 		Dialog dlg = _prefs.createDialog(frame, "Set Paper Options");
@@ -174,11 +190,14 @@ class PaperDialog
 		PrintService prt = PrintServiceLookup.lookupDefaultPrintService();
 		if (prt != null) {
 			Object attr = prt.getSupportedAttributeValues(Media.class, null, null);
+			int last = -1;
 			if (attr instanceof Media[]) {
 				Media[] meds = (Media[])attr;
 				for (Media media : meds) {
 					// Filter for physical paper sizes
-					if (media instanceof MediaSizeName) {
+					if (media instanceof MediaSizeName &&
+							media.hashCode() != last) {
+						last = media.hashCode();
 						mss.add((MediaSizeName)media);
 					}
 				}

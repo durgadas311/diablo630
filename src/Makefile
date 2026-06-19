@@ -17,8 +17,6 @@ CORE_CLASSES =	\
 
 D630_CLASSES =	\
 		Diablo630stdin.class \
-		lsfonts.class \
-		genprint.class \
 		IntelHex.class
 
 SUPP_CLASSES = \

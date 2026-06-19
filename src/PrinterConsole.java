@@ -37,7 +37,7 @@ class PrinterConsole implements WindowListener
 	}
 
 	public void setFont(Font font) {
-		String s = font.getFontName();
+		String s = font.getName();
 		int i = s.indexOf('.');
 		if (i >= 0) {
 			s = s.substring(0, i);

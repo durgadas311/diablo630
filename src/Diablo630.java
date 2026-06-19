@@ -40,6 +40,9 @@ class Diablo630 extends Printer_Paper
 
 	int _pages;
 	int _partial;
+	boolean genprop; // print prop spacing table, exit
+	boolean genmw; // print MagicWand prop spacing table, exit
+	int genws; // print WordStar prop spacing table at ORG, exit
 	boolean gui = true;
 	boolean auto_lf;
 	boolean col132_nl;
@@ -47,6 +50,7 @@ class Diablo630 extends Printer_Paper
 	OutputStream tee = null;
 	PrinterConsole _cons;
 	private javax.swing.Timer timer;
+	private File _cwd;
 	private File _file;
 	private String _outName;
 	private OutputStream _fos;
@@ -54,6 +58,7 @@ class Diablo630 extends Printer_Paper
 	private String _fosName;
 	private Font _font;
 	private boolean propFont;
+	private float[] propTbl;
 	private PaperDialog _pset;
 	private FontDialog _fset;
 	private InputStream _inp;
@@ -72,6 +77,7 @@ class Diablo630 extends Printer_Paper
 	private String _cline;
 	private String _pstr;	// properties for ESC F
 	private boolean _grph;
+	private boolean _ps;
 	private int _attr;
 	private float _off;
 	private int _phu;	// user-set page height (ESC FF n)
@@ -112,7 +118,7 @@ class Diablo630 extends Printer_Paper
 	private File trueDir(File f) {
 		File d = f.getParentFile();
 		if (d == null) {
-			d = new File(System.getProperty("user.dir"));
+			d = _cwd;
 		}
 		return d;
 	}
@@ -426,6 +432,69 @@ class Diablo630 extends Printer_Paper
 		super.setPage(pwx, phx, (int)lm, (int)tm);
 	}
 
+	private void buildPropTable(FontRenderContext frc, Font f) {
+		char[] c = new char[1];
+		propTbl = new float[96];
+		for (int b = 0; b < 96; ++b) {
+			c[0] = (char)(b + 32);
+			propTbl[b] = (float)f.getStringBounds(c, 0, 1, frc).getWidth();
+if (false) {
+System.err.format("%4.1f,", propTbl[b]);
+if ((b & 0x0f) == 0x0f) System.err.format("\n");
+}
+		}
+	}
+
+	private void mwPropTable(PrintStream out) {
+		IntelHex hex = new IntelHex(out);
+		for (int x = 0; x < 32; ++x) {
+			hex.put(0x500 + x, (byte)0);
+		}
+		for (int x = 0; x < 96; ++x) {
+			hex.put(0x500 + x + 32,
+				(byte)Math.round((propTbl[x] * 120f) / 72f));
+		}
+		hex.endFile();
+	}
+
+	// Taken from WordStar 3.30 WS.COM
+	static final byte[] wsDefTbl = new byte[] {
+(byte)0x52,(byte)0x43,(byte)0x44,(byte)0x54,(byte)0x54,(byte)0x56,
+(byte)0x56,(byte)0x32,(byte)0x43,(byte)0x43,(byte)0x54,(byte)0x54,(byte)0x42,(byte)0x54,
+(byte)0x32,(byte)0x53,(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x54,
+(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x43,(byte)0x42,(byte)0x54,(byte)0x54,
+(byte)0x54,(byte)0x54,(byte)0x56,(byte)0x55,(byte)0x55,(byte)0x55,(byte)0x56,(byte)0x55,
+(byte)0x55,(byte)0x56,(byte)0x56,(byte)0x53,(byte)0x53,(byte)0x56,(byte)0x55,(byte)0x66,
+(byte)0x56,(byte)0x56,(byte)0x54,(byte)0x56,(byte)0x56,(byte)0x54,(byte)0x55,(byte)0x56,
+(byte)0x56,(byte)0x67,(byte)0x56,(byte)0x56,(byte)0x55,(byte)0x54,(byte)0x56,(byte)0x54,
+(byte)0x56,(byte)0x55,(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x54,
+(byte)0x53,(byte)0x54,(byte)0x54,(byte)0x52,(byte)0x52,(byte)0x54,(byte)0x52,(byte)0x66,
+(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x53,(byte)0x53,(byte)0x53,(byte)0x54,
+(byte)0x54,(byte)0x66,(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x54,(byte)0x56,(byte)0x54,
+(byte)0x56,(byte)0x55
+		};
+	private void wsPropTable(PrintStream out, int org) {
+		IntelHex hex = new IntelHex(out);
+		if (org < 0) {
+			org = 0x7ba; // WordStar 3.30
+		}
+		// WordStar baseline is 3 units...
+		for (int x = 0; x < 96; ++x) {
+			// hope it doesn't overflow...
+			int p = (int)Math.round((propTbl[x] * 60f) / 72f); // 1/60
+			if (p > 0x0f) p = 0x0f; // hope for the best
+			hex.put(org + x, (byte)((p & 0x0f) | (wsDefTbl[x] & 0xf0)));
+		}
+		hex.endFile();
+	}
+
+	private void dumpPropTable(PrintStream out) {
+		for (int x = 0; x < 96; ++x) {
+			out.format("%2d,", (int)Math.round((propTbl[x] * 120f) / 72f));
+			if ((x & 0x0f) == 0x0f) out.format("\n");
+		}
+	}
+
 	public void init(Graphics g) {
 		if (_init) {
 			return;
@@ -449,14 +518,32 @@ class Diablo630 extends Printer_Paper
 			_fa = lm.getAscent();
 			// Because we adjust font tracking to match _cpi,
 			// _hsi becomes trivial/constant like _vsi.
-			if (x != 72f) {
+			if (!propFont && x != 72f) {
 				float t = (72f - x) / _cpi / _font.getSize2D();
 				//System.err.format("Tracking = %f\n", t);
 				Map<TextAttribute, Object> atr = new HashMap<TextAttribute, Object>();
 				atr.put(TextAttribute.TRACKING, t);
 				_font = _font.deriveFont(atr);
+				// recompute actual width
+				x = (float)_font.getStringBounds(txt, frc).getWidth();
+// System.err.format("Tracking %f => font-inch %f\n", t, x);
 			}
 			super.init(_font, _fa);
+			if (propFont) {
+				buildPropTable(frc, _font);
+				if (genmw) {
+					mwPropTable(System.out);
+					System.exit(0);
+				}
+				if (genws != 0) {
+					wsPropTable(System.out, genws);
+					System.exit(0);
+				}
+				if (genprop) {
+					dumpPropTable(System.out);
+					System.exit(0);
+				}
+			}
 			_font_chg = false;
 		}
 		_hsi = 72.0f / _cpi;
@@ -515,7 +602,9 @@ class Diablo630 extends Printer_Paper
 		return rc;
 	}
 
-	static List<String> bools = Arrays.asList("nogui", "auto_lf", "col132_nl");
+	// NOTE: "genws=<org>" does not get handled by 'bools'
+	static List<String> bools = Arrays.asList("nogui", "auto_lf",
+						"col132_nl", "genprop", "genmw", "genws");
 	public static void processArgs(Properties props, String[] args,
 				List<String> _bools, String[] seq) {
 		int x = 0;
@@ -535,6 +624,7 @@ class Diablo630 extends Printer_Paper
 		initProps = props;
 		_inp = in;
 		_cons = null;
+		_cwd = new File(System.getProperty("user.dir"));
 		String p = props.getProperty("diablo630_nogui");
 		if (p != null) {
 			// TODO: how to interpret values...
@@ -612,6 +702,34 @@ class Diablo630 extends Printer_Paper
 		t.start();
 	}
 
+	private boolean parseFont(String[] fargs) {
+		if (fargs.length != 3) {
+			return false;
+		}
+		String fn = fargs[0];
+		if (fn.indexOf("_") > 0) {
+			fn = fn.replaceAll("_", " ");
+		}
+		int fs = Font.PLAIN;
+		if (fargs[1].equalsIgnoreCase("BOLD")) {
+			fs = Font.BOLD;
+		} else if (fargs[1].equalsIgnoreCase("ITALIC")) {
+			fs = Font.ITALIC;
+		} else if (fargs[1].equalsIgnoreCase("PLAIN")) {
+			// already set
+		} else {
+			return false;
+		}
+		int fp = 12;
+		try {
+			fp = Integer.valueOf(fargs[2]);
+		} catch (Exception ee) {
+			return false;
+		}
+		_font = new Font(fn, fs, fp);
+		return true;
+	}
+
 	private void reconfig(Properties props) {
 		_lpi = 6;
 		_cpi = 10;
@@ -631,6 +749,28 @@ class Diablo630 extends Printer_Paper
 			if (c != 0) {
 				_cpi = c;
 			}
+		}
+		p = props.getProperty("diablo630_genmw");
+		if (p != null) {
+			// TODO: how to interpret values...
+			try {
+				genmw = Boolean.valueOf(p);
+			} catch (Exception ee) {}
+		}
+		p = props.getProperty("diablo630_genws");
+		if (p != null) {
+			if (p.equals("true")) { // simple boolean
+				genws = -1; // use default ORG
+			} else {
+				genws = Integer.decode(p); // ORG of table in WS.COM
+			}
+		}
+		p = props.getProperty("diablo630_genprop");
+		if (p != null) {
+			// TODO: how to interpret values...
+			try {
+				genprop = Boolean.valueOf(p);
+			} catch (Exception ee) {}
 		}
 		p = props.getProperty("diablo630_lpi");
 		if (p != null) {
@@ -668,16 +808,9 @@ class Diablo630 extends Printer_Paper
 		p = props.getProperty("diablo630_font");
 		if (p != null) {
 			String[] fargs = p.split("[,\\s]");
-			// TODO: check validity?
-			if (fargs.length != 3) {
+			if (!parseFont(fargs)) {
+				System.err.format("Invalid FONT args \"%s\"\n", p);
 			}
-			// TODO: fully parse font args
-			int fs = Font.PLAIN;
-			int fp = 12;
-			try {
-				fp = Integer.valueOf(fargs[2]);
-			} catch (Exception ee) {}
-			_font = new Font(fargs[0], fs, fp);
 		}
 		p = props.getProperty("diablo630_alt_color");
 		if (p != null) {
@@ -687,18 +820,15 @@ class Diablo630 extends Printer_Paper
 		if (p != null) {
 			String[] pargs = p.split("[,\\s]");
 			for (String parg : pargs) {
-				if (parg.equalsIgnoreCase("LETTER")) {
-					_ms = MediaSizeName.NA_LETTER;
-				} else if (parg.equalsIgnoreCase("LEGAL")) {
-					_ms = MediaSizeName.NA_LEGAL;
-				} else if (parg.equalsIgnoreCase("A4")) {
-					_ms = MediaSizeName.ISO_A4;
-				} else if (parg.equalsIgnoreCase("FORMS")) {
+				if (parg.equalsIgnoreCase("FORMS")) {
 					_ms = PaperDialog.getForms();
 				} else if (parg.equalsIgnoreCase("PORTRAIT")) {
 					_or = OrientationRequested.PORTRAIT;
 				} else if (parg.equalsIgnoreCase("LANDSCAPE")) {
 					_or = OrientationRequested.LANDSCAPE;
+				} else {
+					MediaSizeName ms = _pset.checkMedia(parg);
+					if (ms != null) _ms = ms;
 				}
 			}
 		}
@@ -725,6 +855,7 @@ class Diablo630 extends Printer_Paper
 		_init = false;
 		setupPaper(_ms, _or);
 		if (_cons != null) {
+			_fset.addFont(_font.getName());
 			_cons.setFont(_font);
 			_cons.setPitch(_cpi, _lpi);
 			_cons.setPaper(_ms, _or);
@@ -831,8 +962,7 @@ class Diablo630 extends Printer_Paper
 
 	// Any forward advance of the carriage.
 	// never called if _grph.
-	private void space() {
-		float x = _x + _hsi + _off;
+	private void space(float x) {
 		if (x >= _pwx) {
 			if (col132_nl) { // not techincally correct -
 					// may not be col 132
@@ -846,16 +976,31 @@ class Diablo630 extends Printer_Paper
 		_x = x;
 	}
 
+	private void space() {
+		if (_ps) {
+			space(_x + propTbl[0] + _off);
+		} else {
+			space(_x + _hsi + _off);
+		}
+	}
+
 	private void bk1tic() {
 		float x = _x - 0.6f; // 1/120 == 0.6 pt
 		if (x < 0) x = 0;
 		_x = x;
 	}
 
-	private void bkspace() {
-		float x = _x - _hsi + _off;
+	private void bkspace(float x) {
 		if (x < 0) x = 0;
 		_x = x;
+	}
+
+	private void bkspace() {
+		if (_ps) {
+			bkspace(_x - propTbl[0] - _off);
+		} else {
+			bkspace(_x - _hsi - _off);
+		}
 	}
 
 	// Move after printing
@@ -874,6 +1019,15 @@ class Diablo630 extends Printer_Paper
 	private void advance() {
 		if (_grph) return;
 		forward();
+	}
+
+	private void advance(float w) {
+		if (_grph) return;
+		if (_dir) {
+			space(_x + w);
+		} else {
+			bkspace(_x - w);
+		}
 	}
 
 	private void backward() {
@@ -953,7 +1107,6 @@ class Diablo630 extends Printer_Paper
 			break;
 		case 31: // US - set HSI
 			_hsi = ((float)(b - 1) * 72f) / 120.0f;
-//System.err.format("_hsi=%f width=%f\n", _hsi, _fw);
 			break;
 		case '\r': // CR - ignore?
 			if (b == 'P') {
@@ -1086,8 +1239,10 @@ class Diablo630 extends Printer_Paper
 			_adjacent = false;
 			break;
 		case 'P':	// enable prop print
+			_ps = propFont;
 			break;
 		case 'Q':	// disable prop print
+			_ps = false;
 			break;
 		case 'U':	// shift +(_vsi/2) - subscript
 			fwdHalf();
@@ -1158,8 +1313,20 @@ class Diablo630 extends Printer_Paper
 		} else {
 			super.addPlot(s, _x, _y, _attr);
 		}
-		_adjacent = closeEnough(_hsi + _off, _fw);
-		advance(); // allow override of _adjacent
+		float w, a;
+		if (_ps) {
+			w = propTbl[s.charAt(0) - 32] + _off;
+		} else {
+			w = _hsi + _off;
+		}
+		if (propFont) {
+			a = propTbl[s.charAt(0) - 32];
+		} else {
+			a = _fw;
+		}
+		//_adjacent = !propFont && closeEnough(w, a);
+		_adjacent = closeEnough(w, a);
+		advance(w); // allow override of _adjacent
 	}
 
 	private void doBlank() {
@@ -1293,15 +1460,14 @@ class Diablo630 extends Printer_Paper
 	}
 
 	// Not used when nogui (_cons == null)
-	public boolean getFile() {
+	public File getFile(String sel, File ref) {
 		boolean chg = false;
-		SuffFileChooser ch = new SuffFileChooser("Select", _file);
+		SuffFileChooser ch = new SuffFileChooser(sel, ref);
 		int rv = ch.showDialog(_cons.getFrame());
 		if (rv == JFileChooser.APPROVE_OPTION) {
-			_file = ch.getSelectedFile();
-			chg = true;
+			return ch.getSelectedFile();
 		}
-		return chg;
+		return null;
 	}
 
 	public void actionPerformed(ActionEvent e) {
@@ -1317,11 +1483,11 @@ class Diablo630 extends Printer_Paper
 		if (e.getSource() instanceof JMenuItem) {
 			JMenuItem m = (JMenuItem)e.getSource();
 			if (m.getMnemonic() == KeyEvent.VK_F) {
-				boolean chg = getFile();
-				if (chg) {
+				File chg = getFile("Select", _file);
+				if (chg != null) {
 					_changed = true;
 					_cons.setChanges(true);
-					_cons.setFileName(_file);
+					_cons.setFileName(chg);
 					inject(0xff);
 				}
 				return;

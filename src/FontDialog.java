@@ -29,7 +29,13 @@ class FontDialog
 	private JRadioButton _lpi_8;
 	private ButtonGroup _cpi_bg;
 	private ButtonGroup _lpi_bg;
-	String[] _fl;
+	String[] _fl = new String[]{
+		Font.DIALOG,
+		Font.DIALOG_INPUT,
+		Font.MONOSPACED,
+		Font.SANS_SERIF,
+		Font.SERIF
+		};
 	String _fn;
 	int _fs;
 	boolean _fw;	// i.e. BOLD
@@ -38,14 +44,20 @@ class FontDialog
 	JOptionPane _prefs;
 	Object[] _btns;
 
-	public void setFont(Font font) {
-		_fn = font.getFontName();
-		int i = _fn.indexOf('.');
-		if (i >= 0) {
-			_fn = _fn.substring(0, i);
+	public void addFont(String font) {
+		int x = _fn_cb.getItemCount();
+		for (int i = 0; i < x; ++i) {
+			if (font.equalsIgnoreCase(_fn_cb.getItemAt(i))) return;
 		}
-		for (i = 0; i < _fl.length; i++) {
-			if (_fl[i].equals(_fn)) {
+		_fn_cb.addItem(font);
+	}
+
+	public void setFont(Font font) {
+		int i;
+		int x = _fn_cb.getItemCount();
+		_fn = font.getName();
+		for (i = 0; i < x; ++i) {
+			if (_fn.equalsIgnoreCase(_fn_cb.getItemAt(i))) {
 				_fn_cb.setSelectedIndex(i);
 				break;
 			}
@@ -136,7 +148,7 @@ class FontDialog
 			int fs = 0;
 			try {
 				fs = Integer.parseInt(_fs_txt.getText());
-			} catch (Exception e) {}
+			} catch (Exception ee) {}
 			if (fs > 0 && fs != _fs) {
 				chg = true;
 			}
@@ -166,7 +178,6 @@ class FontDialog
 				_f = new Font(fn, fa, fs);
 			}
 			if (fs <= 0 || _f == null) {
-System.err.println("Failed to get a matching font");
 				chg = false;
 			}
 		}
@@ -193,7 +204,6 @@ System.err.println("Failed to get a matching font");
 		s.insets.right = 0;
 		s.anchor = GridBagConstraints.WEST;
 
-		_fl = GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames();
 		_fn_cb = new JComboBox<String>(_fl);
 		gridbag.setConstraints(_fn_cb, s);
 		_dia_pn.add(_fn_cb);

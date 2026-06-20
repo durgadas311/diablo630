@@ -18,13 +18,13 @@ class IntelHex {
 	}
 
 	private void flushLine() {
-		out.format(":%02x%02x%02x00", num, (addr >> 8), (addr & 0x0ff));
+		out.format(":%02X%02X%02X00", num, (addr >> 8), (addr & 0x0ff));
 		csum = (num) + (addr >> 8) + (addr & 0x0ff);
 		for (int x = 0; x < num; ++x) {
 			csum += line[x];
-			out.format("%02x", line[x]);
+			out.format("%02X", line[x]);
 		}
-		out.format("%02x\n", (byte)((-csum) & 0x0ff));
+		out.format("%02X\n", (byte)((-csum) & 0x0ff));
 		addr += num;
 		num = 0;
 	}

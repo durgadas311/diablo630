@@ -662,6 +662,9 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 			mi = new JMenuItem("Discard", KeyEvent.VK_D);
 			mi.addActionListener(this);
 			mu.add(mi);
+			mi = new JMenuItem("Capture", KeyEvent.VK_C);
+			mi.addActionListener(this);
+			mu.add(mi);
 			_cons.addMenu(mu);
 
 			mu = new JMenu("Settings");
@@ -1494,6 +1497,16 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 			}
 			if (m.getMnemonic() == KeyEvent.VK_D) {
 				inject(0xfe);
+				return;
+			}
+			if (m.getMnemonic() == KeyEvent.VK_C) {
+				File cap = getFile("Capture", _cwd);
+				if (cap == null) return;
+				try {
+					if (tee != null) tee.close();
+					tee = new FileOutputStream(cap);
+					teeName = cap.getAbsolutePath();
+				} catch (Exception ee) { tee = null; }
 				return;
 			}
 			if (m.getMnemonic() == KeyEvent.VK_P) {

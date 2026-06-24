@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Douglas Miller
+// Copyright (c) 2026 Douglas Miller <durgadas311@gmail.com>
 
 import java.awt.*;
 import java.awt.print.*;
@@ -17,6 +17,9 @@ class Printer_Paper
 	int _pwx, _phx;
 	Color _alt = Color.red;
 	float _scale;
+	boolean _fontTest;
+
+	public boolean fontTest() { return _fontTest; }
 
 	public void init(Font font, float fa) {
 		__font = font;
@@ -139,6 +142,14 @@ class Printer_Paper
 			g2d.scale(_scale, _scale);
 		}
 		g2d.setFont(__font);
+		if (_fontTest) {
+			if (pageIndex == 0) {
+				FontTest.paint(g2d, __font);
+				return Printable.PAGE_EXISTS;
+			} else {
+				return Printable.NO_SUCH_PAGE;
+			}
+		}
 
 		g2d.setColor(Color.black);
 

@@ -232,7 +232,7 @@ class Diablo630 extends Printer_Paper
 			timer.stop();
 		}
 		//System.err.println("End of job");
-		boolean nothing = (_pages == 0 && _partial == 0);
+		boolean nothing = (!_fontTest && _pages == 0 && _partial == 0);
 		boolean blank = blankPage();
 		// reset page count since file is now empty
 		_pages = 0;
@@ -490,7 +490,17 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 
 	private void dumpPropTable(PrintStream out) {
 		for (int x = 0; x < 96; ++x) {
-			out.format("%2d,", (int)Math.round((propTbl[x] * 120f) / 72f));
+			if ((x & 0x0f) == 0) {
+				char c = ';';
+				for (int y = 0; y < 16; ++y) {
+					out.format("%c %c  ", c, (char)(x + 32 + y));
+					c = ' ';
+				}
+				out.format("\n");
+			}
+			//out.format("%2d,", (int)Math.round((propTbl[x] * 120f) / 72f));
+			//out.format("%4.1f,", propTbl[x]);
+			out.format("%4.1f,", (propTbl[x] * 120f) / 72f);
 			if ((x & 0x0f) == 0x0f) out.format("\n");
 		}
 	}
@@ -579,6 +589,7 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 		String p = props.getProperty("diablo630_esc_" + _sppr[x]);
 		if (p != null) {
 			int u = Integer.decode(p);
+			// length should always be 1
 			_spcl[x] = Character.toString(u);
 		}
 	}
@@ -604,7 +615,7 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 
 	// NOTE: "genws=<org>" does not get handled by 'bools'
 	static List<String> bools = Arrays.asList("nogui", "auto_lf",
-						"col132_nl", "genprop", "genmw", "genws");
+				"col132_nl", "genprop", "genmw", "genws", "fonttest");
 	public static void processArgs(Properties props, String[] args,
 				List<String> _bools, String[] seq) {
 		int x = 0;
@@ -774,6 +785,10 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 			try {
 				genprop = Boolean.valueOf(p);
 			} catch (Exception ee) {}
+		}
+		p = props.getProperty("diablo630_fonttest");
+		if (p != null) {
+			_fontTest = p.equals("true");
 		}
 		p = props.getProperty("diablo630_lpi");
 		if (p != null) {
@@ -1305,23 +1320,24 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 		return ret;
 	}
 
+	// 's' is always (?) length of 1
 	private void prtChar(String s) {
 		showPrint(_x, _y, s.length());
 		if (_adjacent) {
 			if (_dir) {
 				super.appendLastPlot(s, _x, _y, _attr);
-			} else {
+		} else {
 				super.prependLastPlot(s, _x, _y, _attr);
-			}
+		}
 		} else {
 			super.addPlot(s, _x, _y, _attr);
 		}
 		float w, a;
 		if (_ps) {
 			w = propTbl[s.charAt(0) - 32] + _off;
-		} else {
+			} else {
 			w = _hsi + _off;
-		}
+			}
 		if (propFont) {
 			a = propTbl[s.charAt(0) - 32];
 		} else {

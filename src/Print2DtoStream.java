@@ -1,4 +1,4 @@
-// Copyright (c) 2016 Douglas Miller
+// Copyright (c) 2016 Douglas Miller <durgadas311@gmail.com>
 
 import java.io.*;
 import java.awt.*;
@@ -60,6 +60,18 @@ class Print2DtoStream implements Printable {
 		if (status == 0) {
 			_prtr.init(g);
 			++status;
+		}
+		if (_prtr.fontTest()) {
+			lastPage = pageIndex;
+			if (pageIndex == 0) {
+				_prtr.print(g, pf, pageIndex, null);
+				did = 1;
+				return Printable.PAGE_EXISTS;
+			} else {
+				did = 0;
+				status = -1;
+				return Printable.NO_SUCH_PAGE;
+			}
 		}
 		if (lastPage != pageIndex) {
 			lastPage = pageIndex;

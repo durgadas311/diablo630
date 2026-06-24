@@ -13,6 +13,7 @@ CORE_CLASSES =	\
 		PrinterConsole.class \
 		PageProgress.class \
 		PaperPaintable.class \
+		FontTest.class \
 		Cleanup.class
 
 D630_CLASSES =	\

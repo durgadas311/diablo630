@@ -1323,27 +1323,30 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 	// 's' is always (?) length of 1
 	private void prtChar(String s) {
 		showPrint(_x, _y, s.length());
-		if (_adjacent) {
-			if (_dir) {
-				super.appendLastPlot(s, _x, _y, _attr);
-		} else {
-				super.prependLastPlot(s, _x, _y, _attr);
-		}
-		} else {
-			super.addPlot(s, _x, _y, _attr);
-		}
 		float w, a;
-		if (_ps) {
-			w = propTbl[s.charAt(0) - 32] + _off;
-			} else {
+		int c = (int)s.charAt(0) - 32;
+		boolean ok = (c >= 0 && c < propTbl.length);
+		if (_ps && ok) { // this is for *only* ESC P mode.
+			w = propTbl[c] + _off;
+		} else {
 			w = _hsi + _off;
-			}
-		if (propFont) {
-			a = propTbl[s.charAt(0) - 32];
+		}
+		float x = _x;
+		if (propFont && ok) {
+			a = propTbl[c];
+			x -= (a / 2f);
 		} else {
 			a = _fw;
 		}
-		//_adjacent = !propFont && closeEnough(w, a);
+		if (_adjacent) {
+			if (_dir) {
+				super.appendLastPlot(s, x, _y, _attr);
+			} else {
+				super.prependLastPlot(s, x, _y, _attr);
+			}
+		} else {
+			super.addPlot(s, x, _y, _attr);
+		}
 		_adjacent = closeEnough(w, a);
 		advance(w); // allow override of _adjacent
 	}

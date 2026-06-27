@@ -14,7 +14,8 @@ class FontTest
 		char[] c = new char[1];
 		c[0] = ' ';
 		LineMetrics lm = font.getLineMetrics(c, 0, 1, frc);
-		int fa = (int)Math.round(lm.getAscent());
+		double ld = lm.getLeading();
+		int fa = (int)Math.round(lm.getAscent() + 1);
 
 		int x = 50;
 		int y = 50;
@@ -23,15 +24,15 @@ class FontTest
 			String s = new String(c);
 			Rectangle2D r = font.getStringBounds(s, frc);
 			Rectangle2D rr = new Rectangle2D.Double(x, y,
-						r.getWidth(), r.getHeight());
+						r.getWidth(), r.getHeight() - ld);
 			g2d.setColor(Color.red);
 			g2d.draw(rr);
 			g2d.setColor(Color.black);
 			g2d.setFont(font);
 			g2d.drawString(s, x, y + fa);
 			g2d.setFont(uf);
-			g2d.drawString(String.format("%.1f", r.getWidth()), x, y - 8);
-			g2d.drawString(String.format("%.1f", r.getHeight()), x, y - 2);
+			g2d.drawString(String.format("%.1f", rr.getWidth()), x, y - 8);
+			g2d.drawString(String.format("%.1f", rr.getHeight()), x, y - 2);
 
 			x +=  32;
 			if ((b & 0x0f) == 0x0f) {

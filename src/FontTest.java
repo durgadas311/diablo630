@@ -17,8 +17,14 @@ class FontTest
 		double ld = lm.getLeading();
 		int fa = (int)Math.round(lm.getAscent() + 1);
 
+		g2d.setFont(uf);
+		g2d.drawString(String.format("%.1fpt %s / %s / %s / %s",
+				font.getSize2D(),
+				font.getName(), font.getFontName(), font.getFamily(),
+				font.getPSName()),
+			50, 50);
 		int x = 50;
-		int y = 50;
+		int y = 100;
 		for (int b = 0; b < 95; ++b) {
 			c[0] = (char)(b + 32);
 			String s = new String(c);
@@ -33,6 +39,8 @@ class FontTest
 			g2d.setFont(uf);
 			g2d.drawString(String.format("%.1f", rr.getWidth()), x, y - 8);
 			g2d.drawString(String.format("%.1f", rr.getHeight()), x, y - 2);
+			g2d.drawString(String.format("+%.1f", ld), x,
+					y + (int)(Math.ceil(r.getHeight() + 4.8)));
 
 			x +=  32;
 			if ((b & 0x0f) == 0x0f) {

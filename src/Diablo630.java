@@ -344,7 +344,7 @@ class Diablo630 extends Printer_Paper
 
 	private void showPrint(float x, float y, int len) {
 		if (_cons != null) {
-			_cons.setPrint((int)x, (int)y, len);
+			_cons.setPrint((int)x + _off_x, (int)y + _off_y, len);
 		}
 	}
 
@@ -1325,7 +1325,7 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 		showPrint(_x, _y, s.length());
 		float w, a;
 		int c = (int)s.charAt(0) - 32;
-		boolean ok = (c >= 0 && c < propTbl.length);
+		boolean ok = (propTbl != null && c >= 0 && c < propTbl.length);
 		if (_ps && ok) { // this is for *only* ESC P mode.
 			w = propTbl[c] + _off;
 		} else {

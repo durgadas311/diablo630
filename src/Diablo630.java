@@ -46,6 +46,11 @@ class Diablo630 extends Printer_Paper
 	boolean gui = true;
 	boolean auto_lf;
 	boolean col132_nl;
+	boolean demo;
+	String demoName = "docs/dump.prn";
+	InputStream demoStream;
+	long demoMs;
+	int demoNs;
 	String teeName = null;
 	OutputStream tee = null;
 	PrinterConsole _cons;
@@ -614,8 +619,10 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 	}
 
 	// NOTE: "genws=<org>" does not get handled by 'bools'
-	static List<String> bools = Arrays.asList("nogui", "auto_lf",
-				"col132_nl", "genprop", "genmw", "genws", "fonttest");
+	static List<String> bools = Arrays.asList("nogui",
+				"auto_lf", "col132_nl",
+				"genprop", "genmw", "genws", "fonttest",
+				"demo");
 	public static void processArgs(Properties props, String[] args,
 				List<String> _bools, String[] seq) {
 		int x = 0;
@@ -632,11 +639,28 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 	}
 
 	public Diablo630(Properties props, InputStream in) {
+		String p;
 		initProps = props;
-		_inp = in;
+		if (in == null) {
+			_inp = System.in;
+			p = props.getProperty("diablo630_demo");
+			if (p != null) {
+				// TODO: only for plain JAR
+				// TODO: allow specifying the file
+				// TODO: allow specifying the speed
+				int baud = 9600;
+				float rate = 10000f / baud;
+				demoMs = (int)rate;
+				demoNs = (int)((rate - demoMs) * 1e6);
+				demoName = "docs/dump.prn";
+				demo = true;
+			}
+		} else {
+			_inp = in;
+		}
 		_cons = null;
 		_cwd = new File(System.getProperty("user.dir"));
-		String p = props.getProperty("diablo630_nogui");
+		p = props.getProperty("diablo630_nogui");
 		if (p != null) {
 			// TODO: how to interpret values...
 			try {
@@ -1625,16 +1649,41 @@ if ((b & 0x0f) == 0x0f) System.err.format("\n");
 		} catch (Exception ee) {}
 	}
 
-	public int readPrinterStream() {
+	private int demoRead() {
 		int b = -1;
 		try {
-			b = _pipe_i.read();
+			if (demoStream == null) {
+				demoStream = Diablo630.class.getResourceAsStream(demoName);
+			}
+			Thread.sleep(demoMs, demoNs);
+			b = demoStream.read();
+			// EOF different than exception
+			if (b < 0) {
+				// rewind the file
+				demoStream.close();
+				demoStream = null;
+				b = 0xff; // end job
+			}
 		} catch (Exception ee) {
 			b = -1;
 		}
-		if (tee != null) try {
-			tee.write(b);
-		} catch (Exception ee) {}
+		return b;
+	}
+
+	public int readPrinterStream() {
+		int b = -1;
+		if (demo) {
+			b = demoRead();
+		} else {
+			try {
+				b = _pipe_i.read();
+			} catch (Exception ee) {
+				b = -1;
+			}
+			if (tee != null) try {
+				tee.write(b);
+			} catch (Exception ee) {}
+		}
 		return b;
 	}
 

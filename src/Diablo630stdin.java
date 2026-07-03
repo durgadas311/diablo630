@@ -30,7 +30,7 @@ public class Diablo630stdin {
 		}
 		Diablo630.processArgs(props, args, boolArgs, seqArgs);
 
-		front_end = new Diablo630(props, System.in);
+		front_end = new Diablo630(props, null);
 		String file = props.getProperty("diablo630_file");
 		if (file == null) {
 			file = "out.ps";

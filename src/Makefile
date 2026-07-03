@@ -41,14 +41,14 @@ jar: Diablo630.jar Diablo630telnet.jar Diablo630tty.jar Diablo630Embedded.jar
 
 java11:
 	mkdir -p temp
-	cp -r $$(git ls-files) temp
+	cp -r --parents $$(git ls-files) temp
 	make -C temp jar JAVAC_REL="--release 11"
 	cp temp/*.jar ../java11
 	rm -rf temp
 
 Diablo630.jar: $(D630_CLASSES) $(CORE_CLASSES) $(SUPP_CLASSES)
 	echo "Main-Class: Diablo630stdin" >Manifest.txt
-	jar -cfm $@ Manifest.txt $(foreach x,$^,'$(x)')
+	jar -cfm $@ Manifest.txt $(foreach x,$^,'$(x)') docs/*
 
 Diablo630telnet.jar: Diablo630telnet.class $(CORE_CLASSES) $(SUPP_CLASSES)
 	echo "Main-Class: Diablo630telnet" >Manifest.txt

@@ -44,7 +44,7 @@ class PaperDialog
 
 	static class F11x14 extends MediaSize {
 		public F11x14() {
-			super(11.0f, 14.0f, Size2DSyntax.INCH);
+			super(11.0f, 13.25f, Size2DSyntax.INCH);
 		}
 	}
 

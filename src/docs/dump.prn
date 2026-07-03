@@ -1,0 +1,215 @@
+                ;	FILE DUMP PROGRAM, READS AN INPUT FILE AND PRINTS IN HEX
+                ;
+                ;	COPYRIGHT (C) 1975, 1976, 1977, 1978
+                ;	DIGITAL RESEARCH
+                ;	BOX 579, PACIFIC GROVE
+                ;	CALIFORNIA, 93950
+                ;
+ 0100           	ORG	100H
+ 0005 =         BDOS	EQU	0005H	;DOS ENTRY POINT
+ 0001 =         CONS	EQU	1	;READ CONSOLE
+ 0002 =         TYPEF	EQU	2	;TYPE FUNCTION
+ 0009 =         PRINTF	EQU	9	;BUFFER PRINT ENTRY
+ 000B =         BRKF	EQU	11	;BREAK KEY FUNCTION (TRUE IF CHAR READY)
+ 000F =         OPENF	EQU	15	;FILE OPEN
+ 0014 =         READF	EQU	20	;READ FUNCTION
+                ;
+ 005C =         FCB	EQU	5CH	;FILE CONTROL BLOCK ADDRESS
+ 0080 =         BUFF	EQU	80H	;INPUT DISK BUFFER ADDRESS
+                ;
+                ;	NON GRAPHIC CHARACTERS
+ 000D =         CR	EQU	0DH	;CARRIAGE RETURN
+ 000A =         LF	EQU	0AH	;LINE FEED
+                ;
+                ;	FILE CONTROL BLOCK DEFINITIONS
+ 005C =         FCBDN	EQU	FCB+0	;DISK NAME
+ 005D =         FCBFN	EQU	FCB+1	;FILE NAME
+ 0065 =         FCBFT	EQU	FCB+9	;DISK FILE TYPE (3 CHARACTERS)
+ 0068 =         FCBRL	EQU	FCB+12	;FILE'S CURRENT REEL NUMBER
+ 006B =         FCBRC	EQU	FCB+15	;FILE'S RECORD COUNT (0 TO 128)
+ 007C =         FCBCR	EQU	FCB+32	;CURRENT (NEXT) RECORD NUMBER (0 TO 127)
+ 007D =         FCBLN	EQU	FCB+33	;FCB LENGTH
+                ;
+                ;	SET UP STACK
+ 0100 210000    	LXI	H,0
+ 0103 39        	DAD	SP
+                ;	ENTRY STACK POINTER IN HL FROM THE CCP
+ 0104 221502    	SHLD	OLDSP
+                ;	SET SP TO LOCAL STACK AREA (RESTORED AT FINIS)
+ 0107 315702    	LXI	SP,STKTOP
+                ;	READ AND PRINT SUCCESSIVE BUFFERS
+ 010A CDC101    	CALL	SETUP	;SET UP INPUT FILE
+ 010D FEFF      	CPI	255	;255 IF FILE NOT PRESENT
+ 010F C21B01    	JNZ	OPENOK	;SKIP IF OPEN IS OK
+                ;
+                ;	FILE NOT THERE, GIVE ERROR MESSAGE AND RETURN
+ 0112 11F301    	LXI	D,OPNMSG
+ 0115 CD9C01    	CALL	ERR
+ 0118 C35101    	JMP	FINIS	;TO RETURN
+                ;
+                OPENOK:	;OPEN OPERATION OK, SET BUFFER INDEX TO END
+ 011B 3E80      	MVI	A,80H
+ 011D 321302    	STA	IBP	;SET BUFFER POINTER TO 80H
+                ;	HL CONTAINS NEXT ADDRESS TO PRINT
+ 0120 210000    	LXI	H,0	;START WITH 0000
+                ;
+                GLOOP:
+ 0123 E5        	PUSH	H	;SAVE LINE POSITION
+ 0124 CDA201    	CALL	GNB
+ 0127 E1        	POP	H	;RECALL LINE POSITION
+ 0128 DA5101    	JC	FINIS	;CARRY SET BY GNB IF END FILE
+ 012B 47        	MOV	B,A
+                ;	PRINT HEX VALUES
+                ;	CHECK FOR LINE FOLD
+ 012C 7D        	MOV	A,L
+ 012D E60F      	ANI	0FH	;CHECK LOW 4 BITS
+ 012F C24401    	JNZ	NONUM
+                ;	PRINT LINE NUMBER
+ 0132 CD7201    	CALL	CRLF
+                ;
+                ;	CHECK FOR BREAK KEY
+ 0135 CD5901    	CALL	BREAK
+                ;	ACCUM LSB = 1 IF CHARACTER READY
+ 0138 0F        	RRC		;INTO CARRY
+ 0139 DA5101    	JC	FINIS	;DON'T PRINT ANY MORE
+                ;
+ 013C 7C        	MOV	A,H
+ 013D CD8F01    	CALL	PHEX
+ 0140 7D        	MOV	A,L
+ 0141 CD8F01    	CALL	PHEX
+                NONUM:
+ 0144 23        	INX	H	;TO NEXT LINE NUMBER
+ 0145 3E20      	MVI	A,' '
+ 0147 CD6501    	CALL	PCHAR
+ 014A 78        	MOV	A,B
+ 014B CD8F01    	CALL	PHEX
+ 014E C32301    	JMP	GLOOP
+                ;
+                FINIS:
+                ;	END OF DUMP, RETURN TO CCP
+                ;	(NOTE THAT A JMP TO 0000H REBOOTS)
+ 0151 CD7201    	CALL	CRLF
+ 0154 2A1502    	LHLD	OLDSP
+ 0157 F9        	SPHL
+                ;	STACK POINTER CONTAINS CCP'S STACK LOCATION
+ 0158 C9        	RET		;TO THE CCP
+                ;
+                ;
+                ;	SUBROUTINES
+                ;
+                BREAK:	;CHECK BREAK KEY (ACTUALLY ANY KEY WILL DO)
+ 0159 E5D5C5    	PUSH H! PUSH D! PUSH B; ENVIRONMENT SAVED
+ 015C 0E0B      	MVI	C,BRKF
+ 015E CD0500    	CALL	BDOS
+ 0161 C1D1E1    	POP B! POP D! POP H; ENVIRONMENT RESTORED
+ 0164 C9        	RET
+                ;
+                PCHAR:	;PRINT A CHARACTER
+ 0165 E5D5C5    	PUSH H! PUSH D! PUSH B; SAVED
+ 0168 0E02      	MVI	C,TYPEF
+ 016A 5F        	MOV	E,A
+ 016B CD0500    	CALL	BDOS
+ 016E C1D1E1    	POP B! POP D! POP H; RESTORED
+ 0171 C9        	RET
+                ;
+                CRLF:
+ 0172 3E0D      	MVI	A,CR
+ 0174 CD6501    	CALL	PCHAR
+ 0177 3E0A      	MVI	A,LF
+ 0179 CD6501    	CALL	PCHAR
+ 017C C9        	RET
+                ;
+                ;
+                PNIB:	;PRINT NIBBLE IN REG A
+ 017D E60F      	ANI	0FH	;LOW 4 BITS
+ 017F FE0A      	CPI	10
+ 0181 D28901    	JNC	P10
+                ;	LESS THAN OR EQUAL TO 9
+ 0184 C630      	ADI	'0'
+ 0186 C38B01    	JMP	PRN
+                ;
+                ;	GREATER OR EQUAL TO 10
+ 0189 C637      P10:	ADI	'A' - 10
+ 018B CD6501    PRN:	CALL	PCHAR
+ 018E C9        	RET
+                ;
+                PHEX:	;PRINT HEX CHAR IN REG A
+ 018F F5        	PUSH	PSW
+ 0190 0F        	RRC
+ 0191 0F        	RRC
+ 0192 0F        	RRC
+ 0193 0F        	RRC
+ 0194 CD7D01    	CALL	PNIB	;PRINT NIBBLE
+ 0197 F1        	POP	PSW
+ 0198 CD7D01    	CALL	PNIB
+ 019B C9        	RET
+                ;
+                ERR:	;PRINT ERROR MESSAGE
+                ;	D,E ADDRESSES MESSAGE ENDING WITH "$"
+ 019C 0E09      	MVI	C,PRINTF	;PRINT BUFFER FUNCTION
+ 019E CD0500    	CALL	BDOS
+ 01A1 C9        	RET
+                ;
+                ;
+                GNB:	;GET NEXT BYTE
+ 01A2 3A1302    	LDA	IBP
+ 01A5 FE80      	CPI	80H
+ 01A7 C2B301    	JNZ	G0
+                ;	READ ANOTHER BUFFER
+                ;
+                ;
+ 01AA CDCE01    	CALL	DISKR
+ 01AD B7        	ORA	A	;ZERO VALUE IF READ OK
+ 01AE CAB301    	JZ	G0	;FOR ANOTHER BYTE
+                ;	END OF DATA, RETURN WITH CARRY SET FOR EOF
+ 01B1 37        	STC
+ 01B2 C9        	RET
+                ;
+                G0:	;READ THE BYTE AT BUFF+REG A
+ 01B3 5F        	MOV	E,A	;LS BYTE OF BUFFER INDEX
+ 01B4 1600      	MVI	D,0	;DOUBLE PRECISION INDEX TO DE
+ 01B6 3C        	INR	A	;INDEX=INDEX+1
+ 01B7 321302    	STA	IBP	;BACK TO MEMORY
+                ;	POINTER IS INCREMENTED
+                ;	SAVE THE CURRENT FILE ADDRESS
+ 01BA 218000    	LXI	H,BUFF
+ 01BD 19        	DAD	D
+                ;	ABSOLUTE CHARACTER ADDRESS IS IN HL
+ 01BE 7E        	MOV	A,M
+                ;	BYTE IS IN THE ACCUMULATOR
+ 01BF B7        	ORA	A	;RESET CARRY BIT
+ 01C0 C9        	RET
+                ;
+                SETUP:	;SET UP FILE 
+                ;	OPEN THE FILE FOR INPUT
+ 01C1 AF        	XRA	A	;ZERO TO ACCUM
+ 01C2 327C00    	STA	FCBCR	;CLEAR CURRENT RECORD
+                ;
+ 01C5 115C00    	LXI	D,FCB
+ 01C8 0E0F      	MVI	C,OPENF
+ 01CA CD0500    	CALL	BDOS
+                ;	255 IN ACCUM IF OPEN ERROR
+ 01CD C9        	RET
+                ;
+                DISKR:	;READ DISK FILE RECORD
+ 01CE E5D5C5    	PUSH H! PUSH D! PUSH B
+ 01D1 115C00    	LXI	D,FCB
+ 01D4 0E14      	MVI	C,READF
+ 01D6 CD0500    	CALL	BDOS
+ 01D9 C1D1E1    	POP B! POP D! POP H
+ 01DC C9        	RET
+                ;
+                ;	FIXED MESSAGE AREA
+ 01DD 46494C4520SIGNON:	DB	'FILE DUMP VERSION 1.4$'
+ 01F3 0D0A4E4F20OPNMSG:	DB	CR,LF,'NO INPUT FILE PRESENT ON DISK$'
+                
+                ;	VARIABLE AREA
+ 0213           IBP:	DS	2	;INPUT BUFFER POINTER
+ 0215           OLDSP:	DS	2	;ENTRY SP VALUE FROM CCP
+                ;
+                ;	STACK AREA
+ 0217           	DS	64	;RESERVE 32 LEVEL STACK
+                STKTOP:
+                ;
+ 0257           	END
+
